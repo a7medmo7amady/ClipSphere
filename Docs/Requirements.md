@@ -188,3 +188,23 @@
 - [ ]  Document error responses (400, 401, 403, 404)
 - [ ]  Serve docs at `/api-docs`
 ---
+# Deliverables
+- [ ]  Clean Three-Layer Architecture:
+    - [ ]  Routes
+    - [ ]  Controllers
+    - [ ]  Services
+- [ ]  `.env` configuration:
+    - [ ]  PORT
+    - [ ]  MONGODB_URI
+    - [ ]  JWT_SECRET
+- [ ]  Postman Collection:
+    - [ ]  Environment variables
+    - [ ]  Auto-token handling
+    - [ ]  Tests per endpoint
+- [ ]  GitHub repository (organized structure)
+- [ ]  ER Diagram (Users ↔ Videos ↔ Reviews ↔ Followers)
+- [ ]  Local testing passes:
+    - [ ]  Registration
+    - [ ]  Login
+    - [ ]  RBAC enforcement
+---
