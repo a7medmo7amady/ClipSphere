@@ -8,7 +8,7 @@
         "type": "tabs",
         "children": [
           {
-            "id": "e2317389c866f455",
+            "id": "9a6e1451240a3263",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Requirements.md",
+                "file": "Plan.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Requirements"
+              "title": "Backlinks for Plan"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Requirements.md",
+                "file": "Plan.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Requirements"
+              "title": "Outgoing links from Plan"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Requirements.md",
+                "file": "Plan.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Requirements"
+              "title": "Outline of Plan"
             }
           }
         ]
@@ -180,11 +180,14 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "markdown-importer:Open format converter": false
     }
   },
-  "active": "e2317389c866f455",
+  "active": "9a6e1451240a3263",
   "lastOpenFiles": [
-    "Requirements.md"
+    "Plan.md",
+    "Requirements.md",
+    "Untitled.md"
   ]
 }
