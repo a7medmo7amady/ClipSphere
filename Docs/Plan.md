@@ -108,4 +108,3 @@ protocols. Students will use Postman Client to verify all logic locally before a
 	- Functional API: A fully working backend that passes local integration tests for Registration, Login, and RBAC.
 	- API Documentation: A Postman Collection including Environment Variables for base URLs, Scripts for automated token management, and Basic Tests for every endpoint.
 	- Database ER Diagram: A visual map of the MongoDB collections highlighting the relationships between Users, Videos, and Reviews.
-	Test
