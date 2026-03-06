@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const config = require("./env");
+import mongoose from "mongoose";
+import config from "./env";
 
-async function connectDatabase() {
+export async function connectDatabase() {
   try {
     await mongoose.connect(config.mongoUri);
     // eslint-disable-next-line no-console
@@ -9,7 +9,6 @@ async function connectDatabase() {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("❌ Failed to connect to MongoDB");
-    // In production we avoid logging full error stack here
     if (config.env !== "production") {
       // eslint-disable-next-line no-console
       console.error(error);
@@ -17,6 +16,4 @@ async function connectDatabase() {
     process.exit(1);
   }
 }
-
-module.exports = { connectDatabase };
 

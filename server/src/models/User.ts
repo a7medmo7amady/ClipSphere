@@ -1,7 +1,35 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import mongoose, { type HydratedDocument } from "mongoose";
+import bcrypt from "bcryptjs";
 
-const userSchema = new mongoose.Schema(
+export type PublicUser = {
+  id: string;
+  name?: string;
+  email: string;
+  bio: string;
+  avatar?: { objectName: string };
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export interface IUser {
+  name?: string;
+  email: string;
+  password: string;
+  bio: string;
+  avatar?: {
+    objectName?: string;
+    updatedAt?: Date;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+
+  comparePassword(candidate: string): Promise<boolean>;
+  toPublicJSON(): PublicUser;
+}
+
+export type UserDocument = HydratedDocument<IUser>;
+
+const userSchema = new mongoose.Schema<IUser>(
   {
     name: {
       type: String,
@@ -40,13 +68,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function hashPassword(next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function hashPassword(this: UserDocument) {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
-  return next();
 });
 
-userSchema.methods.comparePassword = async function comparePassword(candidate) {
+userSchema.methods.comparePassword = async function comparePassword(candidate: string) {
   return bcrypt.compare(candidate, this.password);
 };
 
@@ -62,7 +89,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
   };
 };
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model<IUser>("User", userSchema);
 
-module.exports = User;
+export default User;
 

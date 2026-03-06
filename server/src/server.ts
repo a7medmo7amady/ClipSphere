@@ -1,6 +1,6 @@
-const config = require("./config/env");
-const { connectDatabase } = require("./config/database");
-const createApp = require("./app");
+import config from "./config/env";
+import { connectDatabase } from "./config/database";
+import createApp from "./app";
 
 async function startServer() {
   await connectDatabase();

@@ -1,15 +1,14 @@
-const User = require("../models/User");
-const AppError = require("../utils/AppError");
+import User from "../models/User";
+import AppError from "../utils/AppError";
 
-async function getMe(userId) {
+export async function getMe(userId: string) {
   const user = await User.findById(userId);
   if (!user) throw new AppError("User not found", 404);
   return user;
 }
 
-async function updateMe(userId, updates) {
-  // Only allow safe profile fields to be updated here.
-  const allowed = {
+export async function updateMe(userId: string, updates: { name?: string; bio?: string }) {
+  const allowed: Record<string, unknown> = {
     name: updates.name,
     bio: updates.bio,
   };
@@ -27,7 +26,7 @@ async function updateMe(userId, updates) {
   return user;
 }
 
-async function updateAvatarMetadata(userId, objectName) {
+export async function updateAvatarMetadata(userId: string, objectName: string) {
   const user = await User.findByIdAndUpdate(
     userId,
     {
@@ -42,10 +41,4 @@ async function updateAvatarMetadata(userId, objectName) {
   if (!user) throw new AppError("User not found", 404);
   return user;
 }
-
-module.exports = {
-  getMe,
-  updateMe,
-  updateAvatarMetadata,
-};
 
