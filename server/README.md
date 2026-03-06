@@ -25,4 +25,5 @@ JWT_SECRET=your_secure_secret_here
 - **Global error handling**: centralized middleware in `src/middleware/errorHandler.js`.
 - **Request logging**: `morgan` middleware in `src/middleware/logger.js`.
 - **Security middleware**: `express-mongo-sanitize` wired via `src/middleware/security.js`.
+- **Secure identity management**: register/login with bcrypt hashing, JWT auth, Zod input validation, and protected profile endpoints.
 
