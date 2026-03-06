@@ -1,6 +1,8 @@
 "use client";
 
 import Sidebar from "@/components/Sidebar";
+import Navbar from "@/components/Navbar";
+import Button from "@/components/ui/Button";
 
 const stats = [
   {
@@ -42,60 +44,28 @@ const stats = [
   },
 ];
 
+const PlayIcon = (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+
 export default function Home() {
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar />
 
-      {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Top nav */}
-        <header className="flex items-center gap-4 px-6 py-3 bg-background border-b border-border">
-          <div className="flex-1 max-w-md">
-            <div className="flex items-center gap-2 bg-muted rounded-full px-4 py-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Search videos, creators...
-            </div>
-          </div>
+        <Navbar />
 
-          <div className="flex items-center gap-3 ml-auto">
-            <button className="relative w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive rounded-full text-[10px] flex items-center justify-center text-destructive-foreground font-bold">
-                3
-              </span>
-            </button>
-
-            <button
-              className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: "var(--sidebar-primary)" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--sidebar-primary-hover)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--sidebar-primary)";
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Upload
-            </button>
-
-            <div className="w-9 h-9 rounded-full flex-shrink-0" style={{ background: "linear-gradient(135deg, var(--sidebar-primary), var(--sidebar-primary-hover))" }} />
-          </div>
-        </header>
-
-        {/* Scrollable body */}
         <main className="flex-1 overflow-y-auto">
-          {/* Hero */}
+       
           <div className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: "420px" }}>
             <div className="absolute inset-0 bg-gradient-to-br from-background via-sidebar to-background" />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--sidebar-primary) 10%, transparent), transparent, color-mix(in srgb, var(--sidebar-primary) 5%, transparent))" }} />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--sidebar-primary) 10%, transparent), transparent, color-mix(in srgb, var(--sidebar-primary) 5%, transparent))" }}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
 
             <div className="relative z-10 text-center px-6 py-16">
@@ -115,24 +85,12 @@ export default function Home() {
               </p>
 
               <div className="flex items-center justify-center gap-4">
-                <button
-                  className="flex items-center gap-2 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                  style={{ backgroundColor: "var(--sidebar-primary)" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--sidebar-primary-hover)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--sidebar-primary)";
-                  }}
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
+                <Button variant="primary" size="lg" icon={PlayIcon}>
                   Start Watching
-                </button>
-                <button className="px-6 py-3 rounded-lg border border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-medium">
+                </Button>
+                <Button variant="outline" size="lg">
                   Upload Your First Video
-                </button>
+                </Button>
               </div>
             </div>
           </div>

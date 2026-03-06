@@ -95,7 +95,6 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Trending Creators */}
       <div className="flex flex-col gap-3 mt-2">
         <p className="text-[10px] font-semibold tracking-widest text-sidebar-foreground/40 uppercase px-2">
           Trending Creators
