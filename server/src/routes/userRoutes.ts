@@ -2,7 +2,6 @@ import express from "express";
 import {
   getMeController,
   updateMeController,
-  updateAvatarController,
   updatePreferencesController,
   followController,
   unfollowController,
@@ -13,16 +12,14 @@ import {
 import protect from "../middleware/protect";
 import { validateBody } from "../middleware/validate";
 import {
-  updateMeSchema,
-  updateAvatarSchema,
+  updateUserSchema,
   updatePreferencesSchema,
 } from "../validation/userSchemas";
 
 const router = express.Router();
 // Protected: current user profile & preferences
 router.get("/me", protect, getMeController);
-router.patch("/me", protect, validateBody(updateMeSchema), updateMeController);
-router.patch("/me/avatar", protect, validateBody(updateAvatarSchema), updateAvatarController);
+router.patch("/updateMe", protect, validateBody(updateUserSchema), updateMeController);
 router.patch("/me/preferences", protect, validateBody(updatePreferencesSchema), updatePreferencesController);
 
 

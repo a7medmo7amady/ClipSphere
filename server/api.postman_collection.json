@@ -3,7 +3,7 @@
     "_postman_id": "8a6c6b8e-7f1a-4ef0-9d8b-8b2f4b25b8e1",
     "name": "ClipSphere API (Server)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for ClipSphere server auth + user profile APIs.\n\nVariables:\n- baseUrl (default): http://localhost:5000\n- token: set automatically after register/login\n"
+    "description": "Postman collection for ClipSphere server auth + user profile APIs.\n\nVariables:\n- baseUrl (default): http://localhost:5000\n- token: set automatically after register/login\n- targetUserId: ID of any user for follow/unfollow/followers/following/getUserById\n"
   },
   "item": [
     {
@@ -173,10 +173,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\",\n  \"bio\": \"Updated bio text\"\n}"
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"bio\": \"Updated bio text\"\n,\n  \"avatarKey\": \"Updated avatar key\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
+              "raw": "{{baseUrl}}/api/v1/users/updateMe",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -184,60 +184,7 @@
                 "api",
                 "v1",
                 "users",
-                "me"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "response": []
-        },
-        {
-          "name": "Update Avatar Metadata",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"objectName\": \"avatars/test-user-001.png\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me/avatar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "users",
-                "me",
-                "avatar"
+                "updateMe"
               ]
             }
           },
@@ -278,7 +225,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"notifications\": true,\n  \"theme\": \"dark\",\n  \"language\": \"en\"\n}"
+              "raw": "{\n  \"inApp\": {\n    \"followers\": true,\n    \"comments\": true,\n    \"likes\": true,\n    \"tips\": false\n  },\n  \"email\": {\n    \"followers\": false,\n    \"comments\": true,\n    \"likes\": false,\n    \"tips\": false\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/me/preferences",
@@ -291,6 +238,46 @@
                 "users",
                 "me",
                 "preferences"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetUserId}}",
+                  "description": "ID of the user to retrieve"
+                }
               ]
             }
           },
@@ -516,7 +503,7 @@
       "key": "targetUserId",
       "value": "",
       "type": "string",
-      "description": "ID of the target user for follow/unfollow/followers/following endpoints"
+      "description": "ID of the target user for follow/unfollow/followers/following/getUserById endpoints"
     }
   ]
 }

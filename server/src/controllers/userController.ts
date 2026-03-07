@@ -1,8 +1,7 @@
 import catchAsync from "../utils/catchAsync";
 import {
   getUserById,
-  updateMe,
-  updateAvatarMetadata,
+  updateUser,
   updatePreferences,
 } from "../services/userService";
 import {
@@ -37,23 +36,15 @@ export const getUserByIdController = catchAsync(async (req, res, next) => {
 
 export const updateMeController = catchAsync(async (req, res, next) => {
   if (!req.user) return next(new AppError("Authentication required", 401));
-  const user = await updateMe(req.user._id.toString(), req.body);
-  res.status(200).json({
-    status: "success",
-    data: {
-      user: user.toPublicJSON(),
-    },
-  });
-});
 
-export const updateAvatarController = catchAsync(async (req, res, next) => {
-  if (!req.user) return next(new AppError("Authentication required", 401));
-  const user = await updateAvatarMetadata(req.user._id.toString(), req.body.objectName);
+  const updates = req.route.path.includes("avatar")
+    ? { avatarKey: req.body.objectName as string }
+    : req.body;
+
+  const user = await updateUser(req.user._id.toString(), updates);
   res.status(200).json({
     status: "success",
-    data: {
-      user: user.toPublicJSON(),
-    },
+    data: { user: user.toPublicJSON() },
   });
 });
 

@@ -2,16 +2,11 @@ import { z } from "zod";
 
 const booleanOptional = z.boolean().optional();
 
-export const updateMeSchema = z
+export const updateUserSchema = z
   .object({
     name: z.string().trim().min(1).max(80).optional(),
     bio: z.string().trim().max(240).optional(),
-  })
-  .strict();
-
-export const updateAvatarSchema = z
-  .object({
-    objectName: z.string().trim().min(1).max(512),
+    avatarKey: z.string().trim().min(1).max(512).optional(),
   })
   .strict();
 

@@ -7,10 +7,14 @@ export async function getUserById(userId: string) {
   return user;
 }
 
-export async function updateMe(userId: string, updates: { name?: string; bio?: string }) {
+export async function updateUser(
+  userId: string,
+  updates: { name?: string; bio?: string; avatarKey?: string }
+) {
   const allowed: Record<string, unknown> = {
     name: updates.name,
     bio: updates.bio,
+    avatarKey: updates.avatarKey,
   };
 
   Object.keys(allowed).forEach((key) => {
@@ -21,19 +25,6 @@ export async function updateMe(userId: string, updates: { name?: string; bio?: s
     new: true,
     runValidators: true,
   });
-
-  if (!user) throw new AppError("User not found", 404);
-  return user;
-}
-
-export async function updateAvatarMetadata(userId: string, objectName: string) {
-  const user = await User.findByIdAndUpdate(
-    userId,
-    {
-      avatarKey: objectName,
-    },
-    { new: true, runValidators: true }
-  );
 
   if (!user) throw new AppError("User not found", 404);
   return user;
