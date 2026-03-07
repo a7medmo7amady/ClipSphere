@@ -3,22 +3,41 @@ import bcrypt from "bcryptjs";
 
 export type PublicUser = {
   id: string;
+  username: string;
   name?: string;
   email: string;
   bio: string;
-  avatar?: { objectName: string };
+  avatarKey?: string;
+  role: "user" | "admin";
+  active: boolean;
+  accountStatus: "active" | "banned";
   createdAt: Date;
   updatedAt: Date;
 };
 
 export interface IUser {
+  username: string;
   name?: string;
   email: string;
   password: string;
   bio: string;
-  avatar?: {
-    objectName?: string;
-    updatedAt?: Date;
+  avatarKey?: string;
+  role: "user" | "admin";
+  active: boolean;
+  accountStatus: "active" | "banned";
+  notificationPreferences: {
+    inApp: {
+      followers: boolean;
+      comments: boolean;
+      likes: boolean;
+      tips: boolean;
+    };
+    email: {
+      followers: boolean;
+      comments: boolean;
+      likes: boolean;
+      tips: boolean;
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +50,13 @@ export type UserDocument = HydratedDocument<IUser>;
 
 const userSchema = new mongoose.Schema<IUser>(
   {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      maxlength: 80,
+    },
     name: {
       type: String,
       trim: true,
@@ -52,21 +78,46 @@ const userSchema = new mongoose.Schema<IUser>(
     bio: {
       type: String,
       trim: true,
-      maxlength: 240,
+      maxlength: 500,
       default: "",
     },
-    avatar: {
-      objectName: {
-        type: String,
-        trim: true,
+    avatarKey: {
+      type: String,
+      trim: true,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    active: {
+      type: Boolean,
+      default: true,
+    },
+    accountStatus: {
+      type: String,
+      enum: ["active", "banned"],
+      default: "active",
+    },
+    notificationPreferences: {
+      inApp: {
+        followers: { type: Boolean, default: true },
+        comments: { type: Boolean, default: true },
+        likes: { type: Boolean, default: true },
+        tips: { type: Boolean, default: true },
       },
-      updatedAt: {
-        type: Date,
+      email: {
+        followers: { type: Boolean, default: false },
+        comments: { type: Boolean, default: false },
+        likes: { type: Boolean, default: false },
+        tips: { type: Boolean, default: false },
       },
     },
   },
   { timestamps: true }
 );
+
+
 
 userSchema.pre("save", async function hashPassword(this: UserDocument) {
   if (!this.isModified("password")) return;
@@ -80,10 +131,14 @@ userSchema.methods.comparePassword = async function comparePassword(candidate: s
 userSchema.methods.toPublicJSON = function toPublicJSON() {
   return {
     id: this._id.toString(),
+    username: this.username,
     name: this.name,
     email: this.email,
     bio: this.bio,
-    avatar: this.avatar?.objectName ? { objectName: this.avatar.objectName } : undefined,
+    avatarKey: this.avatarKey,
+    role: this.role,
+    active: this.active,
+    accountStatus: this.accountStatus,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
   };

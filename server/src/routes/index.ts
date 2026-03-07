@@ -5,9 +5,9 @@ import userRoutes from "./userRoutes";
 
 const router = express.Router();
 
-router.use("/api", healthRoutes);
-router.use("/api/auth", authRoutes);
-router.use("/api/users", userRoutes);
+router.use("/api/v1", healthRoutes);
+router.use("/api/v1/auth", authRoutes);
+router.use("/api/v1/users", userRoutes);
 
 export default router;
 

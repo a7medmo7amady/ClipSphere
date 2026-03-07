@@ -9,11 +9,21 @@ function signToken(userId: string) {
   });
 }
 
-export async function register(payload: { name?: string; email: string; password: string }) {
-  const existing = await User.findOne({ email: payload.email });
+export async function register(payload: {
+  username: string;
+  name?: string;
+  email: string;
+  password: string;
+}) {
+  const existingByEmail = await User.findOne({ email: payload.email });
 
-  if (existing) {
+  if (existingByEmail) {
     throw new AppError("email already in use", 409, { field: "email" });
+  }
+
+  const existingByUsername = await User.findOne({ username: payload.username });
+  if (existingByUsername) {
+    throw new AppError("username already in use", 409, { field: "username" });
   }
 
   const user = await User.create(payload);
