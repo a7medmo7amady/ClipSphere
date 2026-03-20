@@ -4,58 +4,58 @@
 
 ### User Schema
 
-- [ ]  Define fields:
-    - [ ]  username (unique, required)
-    - [ ]  email (unique, required)
-    - [ ]  password (hashed, required)
-    - [ ]  role (`user` | `admin`, default: user)
-    - [ ]  bio (optional)
-    - [ ]  avatarKey (metadata only)
-    - [ ]  active (boolean, default: true)
-    - [ ]  accountStatus (for moderation)
-    - [ ]  notificationPreferences:
-        - [ ] inApp: followers, comments, likes, tips (booleans)
-        - [ ]  email: followers, comments, likes, tips (booleans)
+- [x]  Define fields:
+    - [x]  username (unique, required)
+    - [x]  email (unique, required)
+    - [x]  password (hashed, required)
+    - [x]  role (`user` | `admin`, default: user)
+    - [x]  bio (optional)
+    - [x]  avatarKey (metadata only)
+    - [x]  active (boolean, default: true)
+    - [x]  accountStatus (for moderation)
+    - [x]  notificationPreferences:
+        - [x] inApp: followers, comments, likes, tips (booleans)
+        - [x]  email: followers, comments, likes, tips (booleans)
 - [ ] Add unique index on email
 - [ ]  Add unique index on username
 ### Video Schema
 
-- [ ]  Define fields:
-    - [ ] title (required)
-    - [ ]  description
-    - [ ]  owner (ObjectId ref → User)
-    - [ ]  videoURL (key placeholder)
-    - [ ]  duration (validate ≤ 300 seconds)
-    - [ ]  viewsCount (default: 0)
-    - [ ]  status (`public` | `private` | `flagged`)
-    - [ ]  timestamps
-- [ ]  Add ownership reference
-- [ ]  Add validation for duration ≤ 300s
+- [x]  Define fields:
+    - [x] title (required)
+    - [x]  description
+    - [x]  owner (ObjectId ref → User)
+    - [x]  videoURL (key placeholder)
+    - [x]  duration (validate ≤ 300 seconds)
+    - [x]  viewsCount (default: 0)
+    - [x]  status (`public` | `private` | `flagged`)
+    - [x]  timestamps
+- [x]  Add ownership reference
+- [x]  Add validation for duration ≤ 300s
 
 ### Review Schema
 
-- [ ] Define fields:
-    - [ ]  rating (1–5, min/max validator)
-    - [ ]  comment
-    - [ ]  user (ObjectId ref → User)
-    - [ ]  video (ObjectId ref → Video)
-- [ ]  Add compound unique index (user + video)
+- [x] Define fields:
+    - [x]  rating (1–5, min/max validator)
+    - [x]  comment
+    - [x]  user (ObjectId ref → User)
+    - [x]  video (ObjectId ref → Video)
+- [x]  Add compound unique index (user + video)
 
 ### Followers Schema
 
-- [ ]  Define fields:
-    - [ ]  followerId (ObjectId ref → User)
-    - [ ]  followingId (ObjectId ref → User)
-- [ ]  Add compound unique index (followerId + followingId)
-- [ ]  Add pre-save hook to prevent self-follow
+- [x]  Define fields:
+    - [x]  followerId (ObjectId ref → User)
+    - [x]  followingId (ObjectId ref → User)
+- [x]  Add compound unique index (followerId + followingId)
+- [x]  Add pre-save hook to prevent self-follow
 ---
 ## MongoDB Initialization
 
-- [ ]  Setup MongoDB locally
-- [ ]  Add MONGODB_URI to `.env`
-- [ ]  Connect using Mongoose
-- [ ]  Handle DB connection errors
-- [ ]  Log successful DB connection
+- [x]  Setup MongoDB locally
+- [x]  Add MONGODB_URI to `.env`
+- [x]  Connect using Mongoose
+- [x]  Handle DB connection errors
+- [x]  Log successful DB connection
 - [ ]  Ensure indexes are created
 ---
 # Step 2: API Controllers
