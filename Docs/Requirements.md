@@ -62,11 +62,11 @@
 
 ## Auth Controllers
 
-- [ ]  register()
+- [/]  register()
     - [ ] Validate input (Zod)
     - [ ]  Hash password (bcrypt, salt=10)
-    - [ ]  Save user
-    - [ ]  Return JWT
+    - [x]  Save user
+    - [x]  Return JWT
 - [ ]  login()
     - [ ]  Validate credentials
     - [ ]  Compare password (bcrypt.compare)
