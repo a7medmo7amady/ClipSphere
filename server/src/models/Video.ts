@@ -43,6 +43,7 @@ const videoSchema = new Schema<IVideo>(
       type: Number,
       required: true,
       min: 0,
+      max: 300,
     },
     viewsCount: {
       type: Number,
