@@ -62,30 +62,30 @@
 
 ## Auth Controllers
 
-- [/]  register()
-    - [ ] Validate input (Zod)
+- [x]  register()
+    - [x] Validate input (Zod)
     - [ ]  Hash password (bcrypt, salt=10)
     - [x]  Save user
     - [x]  Return JWT
-- [ ]  login()
-    - [ ]  Validate credentials
-    - [ ]  Compare password (bcrypt.compare)
-    - [ ]  Generate JWT (24h expiry)
+- [x]  login()
+    - [x]  Validate credentials
+    - [x]  Compare password (bcrypt.compare)
+    - [x]  Generate JWT (24h expiry)
 ---
 
 ## User Controllers
 
-- [ ]  getMe()
-- [ ]  updateMe()
-- [ ]  getUserById()
-- [ ]  updatePreferences()
+- [x]  getMe()
+- [x]  updateMe()
+- [x]  getUserById()
+- [x]  updatePreferences()
 ---
 ## Follow Controllers
 
-- [ ]  followUser()
-- [ ]  unfollowUser()
-- [ ]  getFollowers()
-- [ ]  getFollowing()
+- [x]  followUser()
+- [x]  unfollowUser()
+- [x]  getFollowers()
+- [x]  getFollowing()
 ---
 ## Video Controllers
 
@@ -107,15 +107,15 @@
 ---
 ## System Controllers
 
-- [ ]  healthCheck()
+- [x]  healthCheck()
 ---
 # Step 3: API Middlewares
 
 ## Core Middlewares
 
-- [ ]  Global Error Handler (async-safe)
-- [ ] Request Logger (Morgan or Winston)
-- [ ]  express.json()
+- [x]  Global Error Handler (async-safe)
+- [x] Request Logger (Morgan or Winston)
+- [x]  express.json()
 ---
 ## Security Middlewares
 
