@@ -117,6 +117,9 @@ const userSchema = new mongoose.Schema<IUser>(
   { timestamps: true }
 );
 
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
+
 
 
 userSchema.pre("save", async function hashPassword(this: UserDocument) {

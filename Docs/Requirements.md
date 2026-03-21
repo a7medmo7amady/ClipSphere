@@ -16,8 +16,8 @@
     - [x]  notificationPreferences:
         - [x] inApp: followers, comments, likes, tips (booleans)
         - [x]  email: followers, comments, likes, tips (booleans)
-- [ ] Add unique index on email
-- [ ]  Add unique index on username
+- [x] Add unique index on email
+- [x]  Add unique index on username
 ### Video Schema
 
 - [x]  Define fields:
@@ -64,7 +64,7 @@
 
 - [x]  register()
     - [x] Validate input (Zod)
-    - [ ]  Hash password (bcrypt, salt=10)
+    - [x]  Hash password (bcrypt, salt=10)
     - [x]  Save user
     - [x]  Return JWT
 - [x]  login()
@@ -73,7 +73,7 @@
     - [x]  Generate JWT (24h expiry)
 ---
 
-## User Controllers
+## User Controllert
 
 - [x]  getMe()
 - [x]  updateMe()
