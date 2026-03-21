@@ -119,16 +119,16 @@
 ---
 ## Security Middlewares
 
-- [ ]  express-mongo-sanitize
-- [ ]  JWT protect middleware
+- [x]  express-mongo-sanitize
+- [x]  JWT protect middleware
 - [ ]  restrictTo(role)
 - [ ]  Ownership middleware (compare req.user.id vs ownerId)
 ---
 ## Validation
 
 - [ ]  Zod validation middleware for:
-    - [ ]  register
-    - [ ]  login
+    - [x]  register
+    - [x]  login
     - [ ]  updateMe
     - [ ]  video creation
     - [ ]  review submission
