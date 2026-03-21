@@ -151,11 +151,11 @@
 ---
 ## User Protected Routes
 
-- [ ]  `GET /api/v1/users/me`
-- [ ]  `PATCH /api/v1/users/updateMe`
-- [ ]  `PATCH /api/v1/users/preference`
-- [ ]  `POST /api/v1/users/:id/follow`
-- [ ]  `DELETE /api/v1/users/:id/unfollow`
+- [x]  `GET /api/v1/users/me`
+- [x]  `PATCH /api/v1/users/updateMe`
+- [x]  `PATCH /api/v1/users/preference`
+- [x]  `POST /api/v1/users/:id/follow`
+- [x]  `DELETE /api/v1/users/:id/unfollow`
 ---
 ## Video Protected Routes
 
