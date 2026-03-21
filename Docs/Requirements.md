@@ -129,7 +129,7 @@
 - [ ]  Zod validation middleware for:
     - [x]  register
     - [x]  login
-    - [ ]  updateMe
+    - [x]  updateMe
     - [ ]  video creation
     - [ ]  review submission
 ---
@@ -137,17 +137,17 @@
 
 ## Public Routes
 
-- [ ]  `GET /health`
-- [ ]  `GET /api/v1/users/:id`
+- [x]  `GET /health`
+- [x]  `GET /api/v1/users/:id`
 - [ ]  `GET /api/v1/videos`
-- [ ]  `GET /api/v1/users/:id/followers`
-- [ ]  `GET /api/v1/users/:id/following`
+- [x]  `GET /api/v1/users/:id/followers`
+- [x]  `GET /api/v1/users/:id/following`
 - [ ]  `GET /api-docs`
 ---
 ## Auth Routes
 
-- [ ]  `POST /api/v1/auth/register`
-- [ ]  `POST /api/v1/auth/login`
+- [x]  `POST /api/v1/auth/register`
+- [x]  `POST /api/v1/auth/login`
 ---
 ## User Protected Routes
 
