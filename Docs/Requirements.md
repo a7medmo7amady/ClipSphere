@@ -56,7 +56,7 @@
 - [x]  Connect using Mongoose
 - [x]  Handle DB connection errors
 - [x]  Log successful DB connection
-- [ ]  Ensure indexes are created
+- [x]  Ensure indexes are created --Indexes aren't made on startup because it affects performance, instead we made a script to sync indexes for CI/CD
 ---
 # Step 2: API Controllers
 
