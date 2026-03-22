@@ -89,10 +89,10 @@
 ---
 ## Video Controllers
 
-- [ ]  createVideo()
-- [ ]  getAllPublicVideos()
-- [ ]  updateVideo()
-- [ ]  deleteVideo()
+- [x]  createVideo()
+- [x]  getAllPublicVideos()
+- [x]  updateVideo()
+- [x]  deleteVideo()
 ---
 ## Review Controllers
 
@@ -121,8 +121,8 @@
 
 - [x]  express-mongo-sanitize
 - [x]  JWT protect middleware
-- [ ]  restrictTo(role)
-- [ ]  Ownership middleware (compare req.user.id vs ownerId)
+- [x]  restrictTo(role)
+- [x]  Ownership middleware (compare req.user.id vs ownerId)
 ---
 ## Validation
 
@@ -130,7 +130,7 @@
     - [x]  register
     - [x]  login
     - [x]  updateMe
-    - [ ]  video creation
+    - [x]  video creation
     - [ ]  review submission
 ---
 # Step 4: API Routes
@@ -139,7 +139,7 @@
 
 - [x]  `GET /health`
 - [x]  `GET /api/v1/users/:id`
-- [ ]  `GET /api/v1/videos`
+- [x]  `GET /api/v1/videos`
 - [x]  `GET /api/v1/users/:id/followers`
 - [x]  `GET /api/v1/users/:id/following`
 - [ ]  `GET /api-docs`
@@ -159,9 +159,9 @@
 ---
 ## Video Protected Routes
 
-- [ ]  `POST /api/v1/videos`
-- [ ]  `PATCH /api/v1/videos/:id`
-- [ ]  `DELETE /api/v1/videos/:id`
+- [x]  `POST /api/v1/videos`
+- [x]  `PATCH /api/v1/videos/:id`
+- [x]  `DELETE /api/v1/videos/:id`
 - [ ]  `POST /api/v1/videos/:id/reviews`
 ---
 ## Admin Routes (protect + restrictTo(admin))
