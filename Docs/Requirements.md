@@ -16,8 +16,8 @@
     - [x]  notificationPreferences:
         - [x] inApp: followers, comments, likes, tips (booleans)
         - [x]  email: followers, comments, likes, tips (booleans)
-- [ ] Add unique index on email
-- [ ]  Add unique index on username
+- [x] Add unique index on email
+- [x]  Add unique index on username
 ### Video Schema
 
 - [x]  Define fields:
@@ -56,36 +56,36 @@
 - [x]  Connect using Mongoose
 - [x]  Handle DB connection errors
 - [x]  Log successful DB connection
-- [ ]  Ensure indexes are created
+- [x]  Ensure indexes are created --Indexes aren't made on startup because it affects performance, instead we made a script to sync indexes for CI/CD
 ---
 # Step 2: API Controllers
 
 ## Auth Controllers
 
-- [ ]  register()
-    - [ ] Validate input (Zod)
-    - [ ]  Hash password (bcrypt, salt=10)
-    - [ ]  Save user
-    - [ ]  Return JWT
-- [ ]  login()
-    - [ ]  Validate credentials
-    - [ ]  Compare password (bcrypt.compare)
-    - [ ]  Generate JWT (24h expiry)
+- [x]  register()
+    - [x] Validate input (Zod)
+    - [x]  Hash password (bcrypt, salt=10)
+    - [x]  Save user
+    - [x]  Return JWT
+- [x]  login()
+    - [x]  Validate credentials
+    - [x]  Compare password (bcrypt.compare)
+    - [x]  Generate JWT (24h expiry)
 ---
 
-## User Controllers
+## User Controllert
 
-- [ ]  getMe()
-- [ ]  updateMe()
-- [ ]  getUserById()
-- [ ]  updatePreferences()
+- [x]  getMe()
+- [x]  updateMe()
+- [x]  getUserById()
+- [x]  updatePreferences()
 ---
 ## Follow Controllers
 
-- [ ]  followUser()
-- [ ]  unfollowUser()
-- [ ]  getFollowers()
-- [ ]  getFollowing()
+- [x]  followUser()
+- [x]  unfollowUser()
+- [x]  getFollowers()
+- [x]  getFollowing()
 ---
 ## Video Controllers
 
@@ -107,29 +107,29 @@
 ---
 ## System Controllers
 
-- [ ]  healthCheck()
+- [x]  healthCheck()
 ---
 # Step 3: API Middlewares
 
 ## Core Middlewares
 
-- [ ]  Global Error Handler (async-safe)
-- [ ] Request Logger (Morgan or Winston)
-- [ ]  express.json()
+- [x]  Global Error Handler (async-safe)
+- [x] Request Logger (Morgan or Winston)
+- [x]  express.json()
 ---
 ## Security Middlewares
 
-- [ ]  express-mongo-sanitize
-- [ ]  JWT protect middleware
+- [x]  express-mongo-sanitize
+- [x]  JWT protect middleware
 - [ ]  restrictTo(role)
 - [ ]  Ownership middleware (compare req.user.id vs ownerId)
 ---
 ## Validation
 
 - [ ]  Zod validation middleware for:
-    - [ ]  register
-    - [ ]  login
-    - [ ]  updateMe
+    - [x]  register
+    - [x]  login
+    - [x]  updateMe
     - [ ]  video creation
     - [ ]  review submission
 ---
@@ -137,25 +137,25 @@
 
 ## Public Routes
 
-- [ ]  `GET /health`
-- [ ]  `GET /api/v1/users/:id`
+- [x]  `GET /health`
+- [x]  `GET /api/v1/users/:id`
 - [ ]  `GET /api/v1/videos`
-- [ ]  `GET /api/v1/users/:id/followers`
-- [ ]  `GET /api/v1/users/:id/following`
+- [x]  `GET /api/v1/users/:id/followers`
+- [x]  `GET /api/v1/users/:id/following`
 - [ ]  `GET /api-docs`
 ---
 ## Auth Routes
 
-- [ ]  `POST /api/v1/auth/register`
-- [ ]  `POST /api/v1/auth/login`
+- [x]  `POST /api/v1/auth/register`
+- [x]  `POST /api/v1/auth/login`
 ---
 ## User Protected Routes
 
-- [ ]  `GET /api/v1/users/me`
-- [ ]  `PATCH /api/v1/users/updateMe`
-- [ ]  `PATCH /api/v1/users/preference`
-- [ ]  `POST /api/v1/users/:id/follow`
-- [ ]  `DELETE /api/v1/users/:id/unfollow`
+- [x]  `GET /api/v1/users/me`
+- [x]  `PATCH /api/v1/users/updateMe`
+- [x]  `PATCH /api/v1/users/preference`
+- [x]  `POST /api/v1/users/:id/follow`
+- [x]  `DELETE /api/v1/users/:id/unfollow`
 ---
 ## Video Protected Routes
 

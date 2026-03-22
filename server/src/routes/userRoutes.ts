@@ -27,7 +27,7 @@ router.get("/:id", getUserByIdController);
 
 // Follow / unfollow (protected; self-follow rejected in service + Follower pre-save hook)
 router.post("/:id/follow", protect, followController);
-router.delete("/:id/follow", protect, unfollowController);
+router.delete("/:id/unfollow", protect, unfollowController);
 
 // Public: list followers / following for any user
 router.get("/:id/followers", getFollowersController);

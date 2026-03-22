@@ -7,4 +7,4 @@ export const getHealthController = catchAsync(async (_req, res) => {
     data: getServiceStatus(),
   });
 });
-
+// some test
