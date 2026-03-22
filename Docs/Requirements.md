@@ -96,7 +96,7 @@
 ---
 ## Review Controllers
 
-- [ ]  createReview()
+- [x]  createReview()
 ---
 ## Admin Controllers
 
@@ -126,12 +126,12 @@
 ---
 ## Validation
 
-- [ ]  Zod validation middleware for:
+- [x]  Zod validation middleware for:
     - [x]  register
     - [x]  login
     - [x]  updateMe
     - [x]  video creation
-    - [ ]  review submission
+    - [x]  review submission
 ---
 # Step 4: API Routes
 
@@ -162,7 +162,7 @@
 - [x]  `POST /api/v1/videos`
 - [x]  `PATCH /api/v1/videos/:id`
 - [x]  `DELETE /api/v1/videos/:id`
-- [ ]  `POST /api/v1/videos/:id/reviews`
+- [x]  `POST /api/v1/videos/:id/reviews`
 ---
 ## Admin Routes (protect + restrictTo(admin))
 
