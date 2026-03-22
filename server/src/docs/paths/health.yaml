@@ -1,0 +1,8 @@
+/api/v1/health:
+  get:
+    tags: [Health]
+    summary: Health check endpoint
+    security: []
+    responses:
+      '200':
+        description: Service status

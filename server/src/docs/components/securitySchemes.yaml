@@ -1,0 +1,9 @@
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: |
+      JWT Authorization header using the Bearer scheme.
+      Enter only the token in Swagger's Authorize dialog; Swagger sends:
+      Authorization: Bearer <token>

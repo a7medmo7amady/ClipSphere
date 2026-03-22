@@ -1,0 +1,229 @@
+schemas:
+  NotificationPreferences:
+    type: object
+    additionalProperties: false
+    properties:
+      followers:
+        type: boolean
+      comments:
+        type: boolean
+      likes:
+        type: boolean
+      tips:
+        type: boolean
+
+  PublicUser:
+    type: object
+    additionalProperties: true
+    properties:
+      _id:
+        type: string
+      username:
+        type: string
+      name:
+        type: string
+        nullable: true
+      email:
+        type: string
+        format: email
+      bio:
+        type: string
+        nullable: true
+      role:
+        type: string
+        enum: [user, admin]
+      accountStatus:
+        type: string
+        enum: [active, banned]
+      active:
+        type: boolean
+      avatarKey:
+        type: string
+        nullable: true
+      preferences:
+        type: object
+        properties:
+          inApp:
+            $ref: '#/components/schemas/NotificationPreferences'
+          email:
+            $ref: '#/components/schemas/NotificationPreferences'
+
+  Video:
+    type: object
+    additionalProperties: true
+    properties:
+      _id:
+        type: string
+      owner:
+        type: string
+      title:
+        type: string
+      description:
+        type: string
+        nullable: true
+      videoURL:
+        type: string
+      duration:
+        type: number
+      status:
+        type: string
+        enum: [public, private]
+
+  Review:
+    type: object
+    additionalProperties: true
+    properties:
+      _id:
+        type: string
+      user:
+        type: string
+      video:
+        type: string
+      rating:
+        type: integer
+        minimum: 1
+        maximum: 5
+      comment:
+        type: string
+
+  RegisterRequest:
+    type: object
+    additionalProperties: false
+    required: [username, email, password]
+    properties:
+      username:
+        type: string
+        minLength: 1
+        maxLength: 80
+      name:
+        type: string
+        minLength: 1
+        maxLength: 80
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        minLength: 8
+        maxLength: 200
+
+  LoginRequest:
+    type: object
+    additionalProperties: false
+    required: [email, password]
+    properties:
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        minLength: 1
+        maxLength: 200
+
+  UpdateUserRequest:
+    type: object
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+        minLength: 1
+        maxLength: 80
+      bio:
+        type: string
+        maxLength: 240
+      avatarKey:
+        type: string
+        minLength: 1
+        maxLength: 512
+
+  UpdatePreferencesRequest:
+    type: object
+    additionalProperties: false
+    properties:
+      inApp:
+        $ref: '#/components/schemas/NotificationPreferences'
+      email:
+        $ref: '#/components/schemas/NotificationPreferences'
+
+  CreateVideoRequest:
+    type: object
+    additionalProperties: false
+    required: [title, videoURL, duration]
+    properties:
+      title:
+        type: string
+        minLength: 1
+        maxLength: 150
+      description:
+        type: string
+        maxLength: 5000
+      videoURL:
+        type: string
+        minLength: 1
+        maxLength: 1024
+      duration:
+        type: number
+        minimum: 0
+        maximum: 300
+      status:
+        type: string
+        enum: [public, private]
+
+  UpdateVideoRequest:
+    type: object
+    additionalProperties: false
+    minProperties: 1
+    properties:
+      title:
+        type: string
+        minLength: 1
+        maxLength: 150
+      description:
+        type: string
+        maxLength: 5000
+
+  CreateReviewRequest:
+    type: object
+    additionalProperties: false
+    required: [rating, comment]
+    properties:
+      rating:
+        type: integer
+        minimum: 1
+        maximum: 5
+      comment:
+        type: string
+        minLength: 10
+        maxLength: 2000
+
+  UpdateUserStatusRequest:
+    type: object
+    additionalProperties: false
+    minProperties: 1
+    properties:
+      active:
+        type: boolean
+      accountStatus:
+        type: string
+        enum: [active, banned]
+
+  PromoteToAdminRequest:
+    type: object
+    additionalProperties: false
+
+  ErrorResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: error
+      message:
+        type: string
+      details:
+        oneOf:
+          - type: array
+            items:
+              type: object
+              additionalProperties: true
+          - type: object
+            additionalProperties: true

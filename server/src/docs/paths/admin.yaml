@@ -1,0 +1,149 @@
+/api/v1/admin/health:
+  get:
+    tags: [Admin]
+    summary: Admin health status
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Admin health info
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Requires admin role
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/admin/stats:
+  get:
+    tags: [Admin]
+    summary: Platform statistics
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Stats payload
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Requires admin role
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/admin/users/{id}/status:
+  patch:
+    tags: [Admin]
+    summary: Update user account status
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/UserIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserStatusRequest'
+    responses:
+      '200':
+        description: User updated
+      '400':
+        description: Validation error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Requires admin role
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: User not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/admin/users/{id}/promote:
+  post:
+    tags: [Admin]
+    summary: Promote a user to admin
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/UserIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromoteToAdminRequest'
+    responses:
+      '200':
+        description: User promoted
+      '400':
+        description: Validation error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Requires admin role
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: User not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/admin/moderation:
+  get:
+    tags: [Admin]
+    summary: Get moderation queue
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Moderation queue items
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Requires admin role
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'

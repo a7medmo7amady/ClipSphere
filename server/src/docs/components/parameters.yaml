@@ -1,0 +1,15 @@
+parameters:
+  UserIdParam:
+    name: id
+    in: path
+    required: true
+    description: User ID
+    schema:
+      type: string
+  VideoIdParam:
+    name: id
+    in: path
+    required: true
+    description: Video ID
+    schema:
+      type: string

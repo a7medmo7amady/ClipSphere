@@ -1,0 +1,140 @@
+/api/v1/videos:
+  get:
+    tags: [Videos]
+    summary: Get all public videos
+    security: []
+    responses:
+      '200':
+        description: List of videos
+  post:
+    tags: [Videos]
+    summary: Create a new video
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateVideoRequest'
+    responses:
+      '201':
+        description: Video created
+      '400':
+        description: Validation error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/videos/{id}:
+  patch:
+    tags: [Videos]
+    summary: Update an existing video (owner only)
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/VideoIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateVideoRequest'
+    responses:
+      '200':
+        description: Video updated
+      '400':
+        description: Validation or ID error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Not owner
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Video not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+  delete:
+    tags: [Videos]
+    summary: Delete a video (owner or admin)
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/VideoIdParam'
+    responses:
+      '200':
+        description: Video deleted
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '403':
+        description: Forbidden
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Video not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/videos/{id}/reviews:
+  post:
+    tags: [Videos]
+    summary: Create a review for a video
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/VideoIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateReviewRequest'
+    responses:
+      '201':
+        description: Review created
+      '400':
+        description: Validation error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Video not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'

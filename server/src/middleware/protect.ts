@@ -6,9 +6,27 @@ import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
 
 function extractToken(req: Request) {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer ")) return null;
-  return header.split(" ")[1];
+  const header = req.headers.authorization?.trim();
+  if (!header) return null;
+
+  const parts = header.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return null;
+
+  if (parts.length === 1) {
+    return parts[0];
+  }
+
+  if (parts[0].toLowerCase() !== "bearer") {
+    return null;
+  }
+
+  let token = parts.slice(1).join(" ").trim();
+
+  while (token.toLowerCase().startsWith("bearer ")) {
+    token = token.slice(7).trim();
+  }
+
+  return token || null;
 }
 
 type JwtPayload = {
