@@ -117,8 +117,6 @@ const userSchema = new mongoose.Schema<IUser>(
   { timestamps: true }
 );
 
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
 
 
 

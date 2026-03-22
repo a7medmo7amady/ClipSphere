@@ -18,6 +18,13 @@ JWT_SECRET=your_secure_secret_here
 - **Development**: `npm run dev`
 - **Production**: `npm start`
 
+### API Documentation
+
+- Swagger UI is available at: `http://localhost:5000/api/docs`
+- OpenAPI base file: `src/docs/swagger.yaml`
+- Components: `src/docs/components/*.yaml`
+- Paths: `src/docs/paths/*.yaml`
+
 ### Features implemented
 
 - **Three-layer architecture**: `routes`, `controllers`, `services`.

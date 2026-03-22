@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: ClipSphere API
+  version: 1.0.0
+  description: API documentation for the ClipSphere backend service.
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Videos
+  - name: Admin
+
+components: {}
+paths: {}

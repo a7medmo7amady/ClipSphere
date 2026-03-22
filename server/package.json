@@ -9,7 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "sync:indexes": "ts-node src/scripts/syncIndexes.ts"
+    "sync:indexes": "ts-node src/scripts/syncIndexes.ts",
+    "seed:test": "bash src/scripts/seed.sh"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.4",
     "morgan": "^1.10.1",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -32,6 +35,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.3.5",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

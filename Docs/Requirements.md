@@ -89,21 +89,21 @@
 ---
 ## Video Controllers
 
-- [ ]  createVideo()
-- [ ]  getAllPublicVideos()
-- [ ]  updateVideo()
-- [ ]  deleteVideo()
+- [x]  createVideo()
+- [x]  getAllPublicVideos()
+- [x]  updateVideo()
+- [x]  deleteVideo()
 ---
 ## Review Controllers
 
-- [ ]  createReview()
+- [x]  createReview()
 ---
 ## Admin Controllers
 
-- [ ]  getStats() (Aggregation Pipeline)
-- [ ]  updateUserStatus() (Soft delete)
-- [ ] getModerationQueue()
-- [ ]  adminHealthCheck()
+- [x]  getStats() (Aggregation Pipeline)
+- [x]  updateUserStatus() (Soft delete)
+- [x] getModerationQueue()
+- [x]  adminHealthCheck()
 ---
 ## System Controllers
 
@@ -121,17 +121,17 @@
 
 - [x]  express-mongo-sanitize
 - [x]  JWT protect middleware
-- [ ]  restrictTo(role)
-- [ ]  Ownership middleware (compare req.user.id vs ownerId)
+- [x]  restrictTo(role)
+- [x]  Ownership middleware (compare req.user.id vs ownerId)
 ---
 ## Validation
 
-- [ ]  Zod validation middleware for:
+- [x]  Zod validation middleware for:
     - [x]  register
     - [x]  login
     - [x]  updateMe
-    - [ ]  video creation
-    - [ ]  review submission
+    - [x]  video creation
+    - [x]  review submission
 ---
 # Step 4: API Routes
 
@@ -139,10 +139,10 @@
 
 - [x]  `GET /health`
 - [x]  `GET /api/v1/users/:id`
-- [ ]  `GET /api/v1/videos`
+- [x]  `GET /api/v1/videos`
 - [x]  `GET /api/v1/users/:id/followers`
 - [x]  `GET /api/v1/users/:id/following`
-- [ ]  `GET /api-docs`
+- [x]  `GET /api-docs`
 ---
 ## Auth Routes
 
@@ -159,52 +159,53 @@
 ---
 ## Video Protected Routes
 
-- [ ]  `POST /api/v1/videos`
-- [ ]  `PATCH /api/v1/videos/:id`
-- [ ]  `DELETE /api/v1/videos/:id`
-- [ ]  `POST /api/v1/videos/:id/reviews`
+- [x]  `POST /api/v1/videos`
+- [x]  `PATCH /api/v1/videos/:id`
+- [x]  `DELETE /api/v1/videos/:id`
+- [x]  `POST /api/v1/videos/:id/reviews`
 ---
 ## Admin Routes (protect + restrictTo(admin))
 
-- [ ]  `GET /api/v1/admin/health`
-- [ ]  `GET /api/v1/admin/stats`
-- [ ]  `PATCH /api/v1/admin/users/:id/status`
-- [ ]  `GET /api/v1/admin/moderation`
+- [x]  `GET /api/v1/admin/health`
+- [x]  `GET /api/v1/admin/stats`
+- [x]  `PATCH /api/v1/admin/users/:id/status`
+- [x]  `GET /api/v1/admin/moderation`
+- [x]  `PATCH /api/v1/admin/users/:id/promote`
 ---
 # Step 5: API Documentation
 
 ## Swagger Integration
 
-- [ ]  Install swagger-jsdoc
-- [ ]  Install swagger-ui-express
-- [ ]  Configure OpenAPI definition
-- [ ]  Add JWT Bearer security scheme
-- [ ]  Document:
-    - [ ] Auth routes
-    - [ ]  User routes
-    - [ ]  Video routes
-    - [ ]  Review routes
-    - [ ]  Admin routes
-- [ ]  Document error responses (400, 401, 403, 404)
-- [ ]  Serve docs at `/api-docs`
+- [x]  Install swagger-jsdoc
+- [x]  Install swagger-ui-express
+- [x]  Configure OpenAPI definition
+- [x]  Add JWT Bearer security scheme
+- [x]  Document:
+    - [x] Auth routes
+    - [x]  User routes
+    - [x]  Video routes
+    - [x]  Review routes
+    - [x]  Admin routes
+- [x]  Document error responses (400, 401, 403, 404)
+- [x]  Serve docs at `/api-docs`
 ---
 # Deliverables
-- [ ]  Clean Three-Layer Architecture:
-    - [ ]  Routes
-    - [ ]  Controllers
-    - [ ]  Services
-- [ ]  `.env` configuration:
-    - [ ]  PORT
-    - [ ]  MONGODB_URI
-    - [ ]  JWT_SECRET
+- [x]  Clean Three-Layer Architecture:
+    - [x]  Routes
+    - [x]  Controllers
+    - [x]  Services
+- [x]  `.env` configuration:
+    - [x]  PORT
+    - [x]  MONGODB_URI
+    - [x]  JWT_SECRET
 - [ ]  Postman Collection:
     - [ ]  Environment variables
     - [ ]  Auto-token handling
     - [ ]  Tests per endpoint
-- [ ]  GitHub repository (organized structure)
+- [x]  GitHub repository (organized structure)
 - [ ]  ER Diagram (Users ↔ Videos ↔ Reviews ↔ Followers)
-- [ ]  Local testing passes:
-    - [ ]  Registration
-    - [ ]  Login
-    - [ ]  RBAC enforcement
+- [x]  Local testing passes:
+    - [x]  Registration
+    - [x]  Login
+    - [x]  RBAC enforcement
 ---
