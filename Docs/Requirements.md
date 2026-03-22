@@ -142,7 +142,7 @@
 - [x]  `GET /api/v1/videos`
 - [x]  `GET /api/v1/users/:id/followers`
 - [x]  `GET /api/v1/users/:id/following`
-- [ ]  `GET /api-docs`
+- [x]  `GET /api-docs`
 ---
 ## Auth Routes
 
@@ -176,36 +176,36 @@
 
 ## Swagger Integration
 
-- [ ]  Install swagger-jsdoc
-- [ ]  Install swagger-ui-express
-- [ ]  Configure OpenAPI definition
-- [ ]  Add JWT Bearer security scheme
-- [ ]  Document:
-    - [ ] Auth routes
-    - [ ]  User routes
-    - [ ]  Video routes
-    - [ ]  Review routes
-    - [ ]  Admin routes
-- [ ]  Document error responses (400, 401, 403, 404)
-- [ ]  Serve docs at `/api-docs`
+- [x]  Install swagger-jsdoc
+- [x]  Install swagger-ui-express
+- [x]  Configure OpenAPI definition
+- [x]  Add JWT Bearer security scheme
+- [x]  Document:
+    - [x] Auth routes
+    - [x]  User routes
+    - [x]  Video routes
+    - [x]  Review routes
+    - [x]  Admin routes
+- [x]  Document error responses (400, 401, 403, 404)
+- [x]  Serve docs at `/api-docs`
 ---
 # Deliverables
-- [ ]  Clean Three-Layer Architecture:
-    - [ ]  Routes
-    - [ ]  Controllers
-    - [ ]  Services
-- [ ]  `.env` configuration:
-    - [ ]  PORT
-    - [ ]  MONGODB_URI
-    - [ ]  JWT_SECRET
+- [x]  Clean Three-Layer Architecture:
+    - [x]  Routes
+    - [x]  Controllers
+    - [x]  Services
+- [x]  `.env` configuration:
+    - [x]  PORT
+    - [x]  MONGODB_URI
+    - [x]  JWT_SECRET
 - [ ]  Postman Collection:
     - [ ]  Environment variables
     - [ ]  Auto-token handling
     - [ ]  Tests per endpoint
-- [ ]  GitHub repository (organized structure)
+- [x]  GitHub repository (organized structure)
 - [ ]  ER Diagram (Users ↔ Videos ↔ Reviews ↔ Followers)
-- [ ]  Local testing passes:
-    - [ ]  Registration
-    - [ ]  Login
-    - [ ]  RBAC enforcement
+- [x]  Local testing passes:
+    - [x]  Registration
+    - [x]  Login
+    - [x]  RBAC enforcement
 ---
