@@ -2,6 +2,9 @@ import jwt from "jsonwebtoken";
 import User from "../models/User";
 import config from "../config/env";
 import AppError from "../utils/AppError";
+import { MailService, welcomeEmailTemplate } from "../utils/email";
+
+const mailService = new MailService();
 
 function signToken(userId: string) {
   return jwt.sign({ id: userId }, config.jwtSecret, {
@@ -28,6 +31,12 @@ export async function register(payload: {
 
   const user = await User.create(payload);
   const token = signToken(user._id.toString());
+
+  mailService.send({
+    to: user.email,
+    subject: "Welcome to ClipSphere!",
+    message: welcomeEmailTemplate(user.username),
+  });
 
   return { user, token };
 }
