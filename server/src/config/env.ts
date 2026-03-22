@@ -24,6 +24,7 @@ const config = {
   mongoUri: process.env.MONGODB_URI as string,
   jwtSecret: process.env.JWT_SECRET as string,
   jwtExpiresIn: (process.env.JWT_EXPIRES_IN || "24h") as SignOptions["expiresIn"],
+  verificationCodeExpiresInMinutes: Number(process.env.VERIFICATION_CODE_EXPIRES_IN),
 };
 
 export default config;

@@ -25,6 +25,9 @@ export interface IUser {
   role: "user" | "admin";
   active: boolean;
   accountStatus: "active" | "banned";
+  emailVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
   notificationPreferences: {
     inApp: {
       followers: boolean;
@@ -99,6 +102,9 @@ const userSchema = new mongoose.Schema<IUser>(
       enum: ["active", "banned"],
       default: "active",
     },
+    emailVerified: { type: Boolean, default: false },
+    verificationToken: { type: String, select: false },
+    verificationTokenExpires: { type: Date, select: false },
     notificationPreferences: {
       inApp: {
         followers: { type: Boolean, default: true },
