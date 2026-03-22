@@ -13,6 +13,16 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVER_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
+if [[ -z "${MONGODB_URI:-}" && -f "${SERVER_DIR}/.env" ]]; then
+	set -a
+	# shellcheck disable=SC1091
+	source "${SERVER_DIR}/.env"
+	set +a
+fi
+
 cleanup() {
 	if [[ -n "${LAST_BODY_FILE}" && -f "${LAST_BODY_FILE}" ]]; then
 		rm -f "${LAST_BODY_FILE}"
@@ -125,6 +135,65 @@ require_value() {
 	fi
 }
 
+assert_body_contains() {
+	local needle="$1"
+	local label="$2"
+
+	TOTAL=$((TOTAL + 1))
+
+	if grep -q "$needle" "$LAST_BODY_FILE"; then
+		PASSED=$((PASSED + 1))
+		echo -e "${GREEN}✓${NC} ${label}"
+	else
+		echo -e "${RED}✗${NC} ${label}"
+		echo "Response body:"
+		cat "$LAST_BODY_FILE"
+		echo
+	fi
+}
+
+promote_user_to_admin() {
+	local user_id="$1"
+
+	if [[ -z "${MONGODB_URI:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to promote seeded user to admin"
+		echo "Set MONGODB_URI in environment or in server/.env"
+		exit 1
+	fi
+
+	(
+		cd "$SERVER_DIR" || exit 1
+		MONGODB_URI="$MONGODB_URI" node -e '
+			const mongoose = require("mongoose");
+
+			async function run() {
+				const uri = process.env.MONGODB_URI;
+				const userId = process.argv[1];
+
+				await mongoose.connect(uri);
+				const result = await mongoose.connection.collection("users").updateOne(
+					{ _id: new mongoose.Types.ObjectId(userId) },
+					{ $set: { role: "admin" } }
+				);
+
+				await mongoose.disconnect();
+
+				if (!result.matchedCount) {
+					process.exit(2);
+				}
+			}
+
+			run().catch(() => process.exit(1));
+		' "$user_id"
+	)
+
+	local promote_exit=$?
+	if [[ "$promote_exit" -ne 0 ]]; then
+		echo -e "${RED}Fatal:${NC} failed to promote user to admin"
+		exit 1
+	fi
+}
+
 print_header "ClipSphere API seed + edge-case test"
 echo "Using BASE_URL=${BASE_URL}"
 
@@ -197,6 +266,11 @@ assert_status "201" "Create private video"
 PRIVATE_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
 require_value "$PRIVATE_VIDEO_ID" "private video id"
 
+api_call "POST" "/videos" "{\"title\":\"Bob Video\",\"description\":\"Video for admin delete test\",\"videoURL\":\"minio/${suffix}-bob.mp4\",\"duration\":45,\"status\":\"public\"}" "$BOB_TOKEN"
+assert_status "201" "Create Bob video"
+BOB_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
+require_value "$BOB_VIDEO_ID" "Bob video id"
+
 api_call "GET" "/videos"
 assert_status "200" "Fetch public video feed"
 
@@ -234,6 +308,45 @@ assert_status "400" "Reject review rating outside 1..5"
 
 api_call "POST" "/videos/${PUBLIC_VIDEO_ID}/reviews" "{\"rating\":4,\"comment\":\"No token should fail for protected review route.\"}"
 assert_status "401" "Reject review without token"
+
+print_header "Admin: RBAC + management endpoints"
+
+api_call "GET" "/admin/health"
+assert_status "401" "Reject admin health without token"
+
+api_call "GET" "/admin/health" "" "$BOB_TOKEN"
+assert_status "403" "Reject non-admin access to admin health"
+
+promote_user_to_admin "$ALICE_ID"
+
+api_call "GET" "/admin/health" "" "$ALICE_TOKEN"
+assert_status "200" "Allow admin health access"
+assert_body_contains '"database"' "Admin health returns database diagnostics"
+
+api_call "GET" "/admin/stats" "" "$ALICE_TOKEN"
+assert_status "200" "Allow admin stats access"
+assert_body_contains '"totals"' "Admin stats returns totals"
+
+api_call "PATCH" "/admin/users/${ALICE_ID}/status" "{\"active\":false}" "$BOB_TOKEN"
+assert_status "403" "Reject non-admin status update"
+
+api_call "PATCH" "/admin/users/${BOB_ID}/status" "{}" "$ALICE_TOKEN"
+assert_status "400" "Reject empty admin status payload"
+
+api_call "PATCH" "/admin/users/${BOB_ID}/status" "{\"active\":false,\"accountStatus\":\"banned\"}" "$ALICE_TOKEN"
+assert_status "200" "Admin updates user status"
+
+api_call "GET" "/users/${BOB_ID}"
+assert_status "200" "Fetch updated user after admin status change"
+assert_body_contains '"active":false' "User active flag updated by admin"
+assert_body_contains '"accountStatus":"banned"' "User accountStatus updated by admin"
+
+api_call "GET" "/admin/moderation" "" "$ALICE_TOKEN"
+assert_status "200" "Allow admin moderation queue access"
+assert_body_contains '"flaggedVideos"' "Moderation queue includes flagged videos field"
+
+api_call "DELETE" "/videos/${BOB_VIDEO_ID}" "" "$ALICE_TOKEN"
+assert_status "200" "Admin can delete another user's video"
 
 print_header "Cleanup test: owner delete"
 
