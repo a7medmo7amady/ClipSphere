@@ -44,3 +44,19 @@ export const moderationQueueController = catchAsync(async (_req, res) => {
     data: queue,
   });
 });
+
+export const promoteUserToAdminController = catchAsync(async (req, res, next) => {
+  const userId = req.params.id?.toString();
+  if (!userId) return next(new AppError("User ID is required", 400));
+
+  const { promoteUserToAdmin } = await import("../services/adminService");
+  const user = await promoteUserToAdmin(userId);
+
+  res.status(200).json({
+    status: "success",
+    message: "User promoted to admin successfully",
+    data: {
+      user: user.toPublicJSON(),
+    },
+  });
+});

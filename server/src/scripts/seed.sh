@@ -341,6 +341,19 @@ assert_status "200" "Fetch updated user after admin status change"
 assert_body_contains '"active":false' "User active flag updated by admin"
 assert_body_contains '"accountStatus":"banned"' "User accountStatus updated by admin"
 
+api_call "POST" "/admin/users/${BOB_ID}/promote" "{}" "$BOB_TOKEN"
+assert_status "403" "Reject non-admin attempting to promote"
+
+api_call "POST" "/admin/users/${BOB_ID}/promote" "{}" "$ALICE_TOKEN"
+assert_status "200" "Admin promotes user to admin"
+
+api_call "GET" "/users/${BOB_ID}"
+assert_status "200" "Fetch user after promotion"
+assert_body_contains '"role":"admin"' "Promoted user now has admin role"
+
+api_call "POST" "/admin/users/${BOB_ID}/promote" "{}" "$ALICE_TOKEN"
+assert_status "409" "Reject promoting already-admin user"
+
 api_call "GET" "/admin/moderation" "" "$ALICE_TOKEN"
 assert_status "200" "Allow admin moderation queue access"
 assert_body_contains '"flaggedVideos"' "Moderation queue includes flagged videos field"

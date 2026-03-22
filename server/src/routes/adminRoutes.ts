@@ -7,8 +7,9 @@ import {
   getStatsController,
   updateUserStatusController,
   moderationQueueController,
+  promoteUserToAdminController,
 } from "../controllers/adminController";
-import { updateUserStatusSchema } from "../validation/adminSchemas";
+import { updateUserStatusSchema, promoteToAdminSchema } from "../validation/adminSchemas";
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.use(protect, restrictTo("admin"));
 router.get("/health", adminHealthController);
 router.get("/stats", getStatsController);
 router.patch("/users/:id/status", validateBody(updateUserStatusSchema), updateUserStatusController);
+router.post("/users/:id/promote", validateBody(promoteToAdminSchema), promoteUserToAdminController);
 router.get("/moderation", moderationQueueController);
 
 export default router;

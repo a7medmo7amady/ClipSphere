@@ -88,6 +88,19 @@ export async function updateUserStatus(userId: string, payload: UpdateUserStatus
   return user;
 }
 
+export async function promoteUserToAdmin(userId: string) {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError("User not found", 404);
+
+  if (user.role === "admin") {
+    throw new AppError("User is already an admin", 409);
+  }
+
+  user.role = "admin";
+  await user.save();
+  return user;
+}
+
 export async function getModerationQueue() {
   const flaggedVideos = await Video.find({ status: "flagged" })
     .sort({ updatedAt: -1 })

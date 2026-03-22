@@ -9,3 +9,5 @@ export const updateUserStatusSchema = z
   .refine((payload) => payload.active !== undefined || payload.accountStatus !== undefined, {
     message: "At least one field is required",
   });
+
+export const promoteToAdminSchema = z.object({}).strict();
