@@ -100,10 +100,10 @@
 ---
 ## Admin Controllers
 
-- [ ]  getStats() (Aggregation Pipeline)
-- [ ]  updateUserStatus() (Soft delete)
-- [ ] getModerationQueue()
-- [ ]  adminHealthCheck()
+- [x]  getStats() (Aggregation Pipeline)
+- [x]  updateUserStatus() (Soft delete)
+- [x] getModerationQueue()
+- [x]  adminHealthCheck()
 ---
 ## System Controllers
 
@@ -166,10 +166,11 @@
 ---
 ## Admin Routes (protect + restrictTo(admin))
 
-- [ ]  `GET /api/v1/admin/health`
-- [ ]  `GET /api/v1/admin/stats`
-- [ ]  `PATCH /api/v1/admin/users/:id/status`
-- [ ]  `GET /api/v1/admin/moderation`
+- [x]  `GET /api/v1/admin/health`
+- [x]  `GET /api/v1/admin/stats`
+- [x]  `PATCH /api/v1/admin/users/:id/status`
+- [x]  `GET /api/v1/admin/moderation`
+- [x]  `PATCH /api/v1/admin/users/:id/promote`
 ---
 # Step 5: API Documentation
 
