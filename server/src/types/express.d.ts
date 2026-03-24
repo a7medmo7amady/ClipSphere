@@ -3,8 +3,9 @@ import type { IUser } from "../models/User";
 
 declare global {
   namespace Express {
+    interface User extends HydratedDocument<IUser> {}
     interface Request {
-      user?: HydratedDocument<IUser>;
+      user?: User;
     }
   }
 }
