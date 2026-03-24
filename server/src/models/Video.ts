@@ -3,6 +3,8 @@ import { Schema, model, Types, type HydratedDocument } from "mongoose";
 export interface IVideo {
   title: string;
   description: string;
+  tags: string[];
+  embedding?: number[];
   owner: Types.ObjectId;
   videoURL: string;
   duration: number;
@@ -27,6 +29,14 @@ const videoSchema = new Schema<IVideo>(
       trim: true,
       maxlength: 5000,
       default: "",
+    },
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+    embedding: {
+      type: [Number],
     },
     owner: {
       type: Schema.Types.ObjectId,

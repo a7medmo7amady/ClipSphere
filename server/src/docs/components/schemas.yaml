@@ -61,6 +61,14 @@ schemas:
       description:
         type: string
         nullable: true
+      tags:
+        type: array
+        items:
+          type: string
+      embedding:
+        type: array
+        items:
+          type: number
       videoURL:
         type: string
       duration:
@@ -68,6 +76,27 @@ schemas:
       status:
         type: string
         enum: [public, private]
+
+  WatchHistory:
+    type: object
+    additionalProperties: true
+    properties:
+      _id:
+        type: string
+      user:
+        type: string
+      video:
+        type: string
+      watchedAt:
+        type: string
+        format: date-time
+      watchDuration:
+        type: number
+        minimum: 0
+      completed:
+        type: boolean
+      liked:
+        type: boolean
 
   Review:
     type: object
@@ -157,6 +186,14 @@ schemas:
       description:
         type: string
         maxLength: 5000
+      tags:
+        type: array
+        items:
+          type: string
+      embedding:
+        type: array
+        items:
+          type: number
       videoURL:
         type: string
         minLength: 1
@@ -181,6 +218,29 @@ schemas:
       description:
         type: string
         maxLength: 5000
+      tags:
+        type: array
+        items:
+          type: string
+      embedding:
+        type: array
+        items:
+          type: number
+
+  LogWatchRequest:
+    type: object
+    additionalProperties: false
+    required: [videoId, watchDuration, completed]
+    properties:
+      videoId:
+        type: string
+        minLength: 1
+      watchDuration:
+        type: number
+        minimum: 0
+        maximum: 300
+      completed:
+        type: boolean
 
   CreateReviewRequest:
     type: object

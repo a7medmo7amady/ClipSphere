@@ -5,6 +5,8 @@ import AppError from "../utils/AppError";
 type CreateVideoPayload = {
   title: string;
   description?: string;
+  tags?: string[];
+  embedding?: number[];
   videoURL: string;
   duration: number;
   status?: "public" | "private";
@@ -13,6 +15,8 @@ type CreateVideoPayload = {
 type UpdateVideoPayload = {
   title?: string;
   description?: string;
+  tags?: string[];
+  embedding?: number[];
 };
 
 type CreateReviewPayload = {
@@ -24,6 +28,8 @@ export async function createVideo(ownerId: string, payload: CreateVideoPayload) 
   const video = await Video.create({
     title: payload.title,
     description: payload.description ?? "",
+    tags: payload.tags ?? [],
+    embedding: payload.embedding,
     owner: ownerId,
     videoURL: payload.videoURL,
     duration: payload.duration,
@@ -46,6 +52,8 @@ export async function updateVideo(videoId: string, payload: UpdateVideoPayload) 
 
   if (payload.title !== undefined) updates.title = payload.title;
   if (payload.description !== undefined) updates.description = payload.description;
+  if (payload.tags !== undefined) updates.tags = payload.tags;
+  if (payload.embedding !== undefined) updates.embedding = payload.embedding;
 
   const video = await Video.findByIdAndUpdate(videoId, updates, {
     new: true,
