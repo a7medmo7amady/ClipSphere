@@ -47,9 +47,6 @@ const watchHistorySchema = new Schema<IWatchHistory>(
   { timestamps: false }
 );
 
-// watchHistorySchema.index({ user: 1, watchedAt: -1 });
-// watchHistorySchema.index({ video: 1 });
-// watchHistorySchema.index({ user: 1, video: 1 });
 
 const WatchHistory = model<IWatchHistory>("WatchHistory", watchHistorySchema);
 
