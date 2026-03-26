@@ -2,7 +2,6 @@
 
 set -u
 
-BASE_URL="${BASE_URL:-http://localhost:${PORT:-5000}/api/v1}"
 TOTAL=0
 PASSED=0
 LAST_STATUS=""
@@ -22,6 +21,8 @@ if [[ -z "${MONGODB_URI:-}" && -f "${SERVER_DIR}/.env" ]]; then
 	source "${SERVER_DIR}/.env"
 	set +a
 fi
+
+API_BASE_URL="${SEED_BASE_URL:-http://localhost:${PORT:-5000}/api/v1}"
 
 cleanup() {
 	if [[ -n "${LAST_BODY_FILE}" && -f "${LAST_BODY_FILE}" ]]; then
@@ -91,7 +92,7 @@ api_call() {
 		-o "$LAST_BODY_FILE"
 		-w "%{http_code}"
 		-X "$method"
-		"${BASE_URL}${endpoint}"
+		"${API_BASE_URL}${endpoint}"
 		-H "Content-Type: application/json"
 	)
 
@@ -194,8 +195,45 @@ promote_user_to_admin() {
 	fi
 }
 
+fetch_verification_code() {
+	local email="$1"
+
+	if [[ -z "${MONGODB_URI:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to fetch verification code during seed"
+		echo "Set MONGODB_URI in environment or in server/.env"
+		exit 1
+	fi
+
+	(
+		cd "$SERVER_DIR" || exit 1
+		MONGODB_URI="$MONGODB_URI" node -e '
+			const mongoose = require("mongoose");
+
+			async function run() {
+				const uri = process.env.MONGODB_URI;
+				const email = process.argv[1];
+
+				await mongoose.connect(uri);
+				const user = await mongoose.connection.collection("users").findOne(
+					{ email },
+					{ projection: { verificationToken: 1 } }
+				);
+				await mongoose.disconnect();
+
+				if (!user || !user.verificationToken) {
+					process.exit(2);
+				}
+
+				process.stdout.write(String(user.verificationToken));
+			}
+
+			run().catch(() => process.exit(1));
+		' "$email"
+	)
+}
+
 print_header "ClipSphere API seed + edge-case test"
-echo "Using BASE_URL=${BASE_URL}"
+echo "Using BASE_URL=${API_BASE_URL}"
 
 print_header "Health check"
 api_call "GET" "/health"
@@ -215,11 +253,19 @@ api_call "POST" "/auth/register" "{\"username\":\"${ALICE_USERNAME}\",\"name\":\
 assert_status "201" "Register Alice"
 ALICE_ID="$(json_get "$LAST_BODY_FILE" "data.user.id" 2>/dev/null || true)"
 require_value "$ALICE_ID" "Alice id"
+ALICE_VERIFY_CODE="$(fetch_verification_code "$ALICE_EMAIL" 2>/dev/null || true)"
+require_value "$ALICE_VERIFY_CODE" "Alice verification code"
+api_call "POST" "/auth/verify-email" "{\"email\":\"${ALICE_EMAIL}\",\"code\":\"${ALICE_VERIFY_CODE}\"}"
+assert_status "200" "Verify Alice email"
 
 api_call "POST" "/auth/register" "{\"username\":\"${BOB_USERNAME}\",\"name\":\"Bob\",\"email\":\"${BOB_EMAIL}\",\"password\":\"${PASSWORD}\"}"
 assert_status "201" "Register Bob"
 BOB_ID="$(json_get "$LAST_BODY_FILE" "data.user.id" 2>/dev/null || true)"
 require_value "$BOB_ID" "Bob id"
+BOB_VERIFY_CODE="$(fetch_verification_code "$BOB_EMAIL" 2>/dev/null || true)"
+require_value "$BOB_VERIFY_CODE" "Bob verification code"
+api_call "POST" "/auth/verify-email" "{\"email\":\"${BOB_EMAIL}\",\"code\":\"${BOB_VERIFY_CODE}\"}"
+assert_status "200" "Verify Bob email"
 
 api_call "POST" "/auth/register" "{\"username\":\"dup_${suffix}\",\"name\":\"Dup\",\"email\":\"${ALICE_EMAIL}\",\"password\":\"${PASSWORD}\"}"
 assert_status "409" "Reject duplicate email"
