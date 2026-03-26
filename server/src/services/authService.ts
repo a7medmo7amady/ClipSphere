@@ -30,7 +30,9 @@ export async function register(payload: {
   }
 
   const verificationToken = String(Math.floor(100000 + Math.random() * 900000)); 
-  const verificationTokenExpires = new Date(Date.now() + config.verificationCodeExpiresInMinutes);
+  const verificationTokenExpires = new Date(
+    Date.now() + config.verificationCodeExpiresInMinutes * 60 * 1000
+  );
 
   const user = await User.create({
     ...payload,

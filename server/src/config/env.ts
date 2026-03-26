@@ -8,6 +8,12 @@ dotenv.config({
 
 const requiredEnv = ["PORT", "MONGODB_URI", "JWT_SECRET"] as const;
 
+const rawVerificationCodeExpiry = process.env.VERIFICATION_CODE_EXPIRES_IN;
+const parsedVerificationCodeExpiry = Number.parseInt(
+  rawVerificationCodeExpiry ?? "10",
+  10
+);
+
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
     const message =
@@ -24,7 +30,10 @@ const config = {
   mongoUri: process.env.MONGODB_URI as string,
   jwtSecret: process.env.JWT_SECRET as string,
   jwtExpiresIn: (process.env.JWT_EXPIRES_IN || "24h") as SignOptions["expiresIn"],
-  verificationCodeExpiresInMinutes: Number(process.env.VERIFICATION_CODE_EXPIRES_IN),
+  verificationCodeExpiresInMinutes:
+    Number.isNaN(parsedVerificationCodeExpiry) || parsedVerificationCodeExpiry <= 0
+      ? 10
+      : parsedVerificationCodeExpiry,
 };
 
 export default config;
