@@ -12,13 +12,26 @@ import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../config/s3";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
+import { getVideoDuration } from "../utils/videoProbe";
 
 export const createVideoController = catchAsync(async (req, res, next) => {
   if (!req.user) return next(new AppError("Authentication required", 401));
 
   if (!req.file) return next(new AppError("Please upload a video file", 400));
 
-  const { title, description, duration, status } = req.body;
+  // Server-side duration enforcement (strictly < 300s)
+  let verifiedDuration: number;
+  try {
+    verifiedDuration = await getVideoDuration(req.file.buffer);
+  } catch (err: any) {
+    return next(new AppError("Could not probe video metadata", 400));
+  }
+
+  if (verifiedDuration > 300) {
+    return next(new AppError("Video duration exceeds 300 seconds (5 minutes) limit", 400));
+  }
+
+  const { title, description, status } = req.body;
 
   // Generate unique S3 key
   const extension = path.extname(req.file.originalname) || ".mp4";
@@ -40,10 +53,11 @@ export const createVideoController = catchAsync(async (req, res, next) => {
   }
 
   // Create video record with the S3 key
+  // ONLY happens if S3 upload succeeds (Atomic mapping)
   const video = await createVideo(req.user._id.toString(), {
     title,
     description,
-    duration: Number(duration), // Multer fields are strings
+    duration: Math.round(verifiedDuration), // Use verified duration
     status,
     videoURL: s3Key,
   });

@@ -4,12 +4,15 @@ import AppError from "../utils/AppError";
 // Storage configuration - memory storage to pipe directly to S3
 const storage = multer.memoryStorage();
 
-// File filter to ensure only video files are uploaded
+// Strict list of allowed video MIME types
+const allowedMimes = ["video/mp4", "video/webm", "video/quicktime"];
+
+// File filter to ensure only specific video files are uploaded
 const fileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
-  if (file.mimetype.startsWith("video/")) {
+  if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new AppError("Only video files are allowed!", 400), false);
+    cb(new AppError("Only mp4, webm, and mov video files are allowed!", 400), false);
   }
 };
 
