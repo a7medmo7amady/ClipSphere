@@ -4,8 +4,7 @@ export const createVideoSchema = z
   .object({
     title: z.string().trim().min(1).max(150),
     description: z.string().trim().max(5000).optional(),
-    videoURL: z.string().trim().min(1).max(1024),
-    duration: z.number().min(0).max(300),
+    duration: z.coerce.number().min(0).max(3600),
     status: z.enum(["public", "private"]).optional(),
   })
   .strict();
