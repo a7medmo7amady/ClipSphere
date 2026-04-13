@@ -9,7 +9,7 @@ export async function follow(
   targetUserId: string
 ): Promise<{ message: string }> {
   if (currentUserId === targetUserId) {
-    throw new AppError("You cannot follow yourself", 400);
+    throw new AppError("You cannot follow yourself", 409);
   }
 
   const target = await User.findById(targetUserId);

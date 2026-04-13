@@ -78,7 +78,7 @@ export async function login(payload: { email: string; password: string }) {
   if (!ok) throw new AppError("Invalid email or password", 401);
 
   if (!user.emailVerified) {
-    throw new AppError("Please verify your email before logging in", 403);
+    throw new AppError("Please verify your email before logging in", 401);
   }
 
   const token = signToken(user._id.toString());
