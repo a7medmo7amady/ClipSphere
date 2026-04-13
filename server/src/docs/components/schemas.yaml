@@ -73,9 +73,17 @@ schemas:
         type: string
       duration:
         type: number
+      viewsCount:
+        type: number
+      reviewsCount:
+        type: number
+      avgRating:
+        type: number
+      trendingScore:
+        type: number
       status:
         type: string
-        enum: [public, private]
+        enum: [public, private, flagged]
 
   WatchHistory:
     type: object
@@ -94,8 +102,6 @@ schemas:
         type: number
         minimum: 0
       completed:
-        type: boolean
-      liked:
         type: boolean
 
   Review:
@@ -204,7 +210,7 @@ schemas:
         maximum: 300
       status:
         type: string
-        enum: [public, private]
+        enum: [public, private, flagged]
 
   UpdateVideoRequest:
     type: object
@@ -235,10 +241,11 @@ schemas:
       videoId:
         type: string
         minLength: 1
+        maxLength: 24
+        pattern: '^[a-fA-F0-9]{24}$'
       watchDuration:
         type: number
         minimum: 0
-        maximum: 300
       completed:
         type: boolean
 

@@ -14,7 +14,7 @@ export async function logWatch(userId: string, payload: LogWatchPayload) {
     throw new AppError("Video not found", 404);
   }
 
-  const safeDuration = Math.min(payload.watchDuration, video.duration);
+  const safeDuration = Math.max(0, Math.min(payload.watchDuration, video.duration));
 
   const history = await WatchHistory.create({
     user: userId,

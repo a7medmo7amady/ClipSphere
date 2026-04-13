@@ -1,5 +1,13 @@
 import { Schema, model, Types, type HydratedDocument } from "mongoose";
 
+export const VIDEO_EMBEDDING_VECTOR_LENGTH = 3;
+
+function normalizeTags(tags: string[] = []): string[] {
+  return [...new Set(tags.map((tag) => tag.trim().toLowerCase()))].filter(
+    (tag) => tag.length > 0
+  );
+}
+
 export interface IVideo {
   title: string;
   description: string;
@@ -9,6 +17,9 @@ export interface IVideo {
   videoURL: string;
   duration: number;
   viewsCount: number;
+  reviewsCount: number;
+  avgRating: number;
+  trendingScore: number;
   status: "public" | "private" | "flagged";
   createdAt: Date;
   updatedAt: Date;
@@ -33,10 +44,20 @@ const videoSchema = new Schema<IVideo>(
     tags: {
       type: [String],
       default: [],
+      set: normalizeTags,
       index: true,
     },
     embedding: {
       type: [Number],
+      validate: {
+        validator(value: number[] | undefined) {
+          return (
+            value === undefined ||
+            value.length === VIDEO_EMBEDDING_VECTOR_LENGTH
+          );
+        },
+        message: `Embedding must contain exactly ${VIDEO_EMBEDDING_VECTOR_LENGTH} numbers`,
+      },
     },
     owner: {
       type: Schema.Types.ObjectId,
@@ -56,6 +77,22 @@ const videoSchema = new Schema<IVideo>(
       max: 300,
     },
     viewsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    reviewsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    avgRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    trendingScore: {
       type: Number,
       default: 0,
       min: 0,
