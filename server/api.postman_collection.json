@@ -512,7 +512,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"My Test Video\",\n  \"description\": \"A sample video upload\",\n  \"tags\": [\"gaming\", \"clips\"],\n  \"embedding\": [0.12, 0.98, -0.44],\n  \"videoURL\": \"https://cdn.example.com/videos/test.mp4\",\n  \"duration\": 120,\n  \"status\": \"public\"\n}"
+              "raw": "{\n  \"title\": \"My Test Video\",\n  \"description\": \"A sample video upload\",\n  \"tags\": [\"gaming\", \"clips\"],\n  \"videoURL\": \"https://cdn.example.com/videos/test.mp4\",\n  \"duration\": 120,\n  \"status\": \"public\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/videos",
@@ -569,7 +569,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"tags\": [\"highlights\", \"edited\"],\n  \"embedding\": [0.77, -0.12, 0.33]\n}"
+              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"tags\": [\"highlights\", \"edited\"]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/videos/:id",
@@ -598,6 +598,109 @@
                 "exec": [
                   "pm.test('Status is 200', function () {",
                   "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "item": [
+        {
+          "name": "Get Feed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/feed?limit=12&historyLimit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12"
+                },
+                {
+                  "key": "historyLimit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 409', function () {",
+                  "  pm.expect([200, 409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Similar Videos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/recommendations?limit=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}",
+                  "description": "ID of the video to find similar videos for"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200, 404, or 409', function () {",
+                  "  pm.expect([200, 404, 409]).to.include(pm.response.code);",
                   "});"
                 ],
                 "type": "text/javascript"

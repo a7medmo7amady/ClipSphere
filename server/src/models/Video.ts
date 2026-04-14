@@ -1,6 +1,5 @@
 import { Schema, model, Types, type HydratedDocument } from "mongoose";
-
-export const VIDEO_EMBEDDING_VECTOR_LENGTH = 3;
+import { VIDEO_EMBEDDING_VECTOR_LENGTH } from "../config/vector";
 
 function normalizeTags(tags: string[] = []): string[] {
   return [...new Set(tags.map((tag) => tag.trim().toLowerCase()))].filter(
@@ -13,6 +12,12 @@ export interface IVideo {
   description: string;
   tags: string[];
   embedding?: number[];
+  embeddingUpdatedAt?: Date;
+  embeddingModel?: string;
+  embeddingStatus?: "pending" | "ready" | "failed";
+  embeddingLastError?: string;
+  embeddingRetryCount?: number;
+  embeddingNextRetryAt?: Date;
   owner: Types.ObjectId;
   videoURL: string;
   duration: number;
@@ -49,6 +54,7 @@ const videoSchema = new Schema<IVideo>(
     },
     embedding: {
       type: [Number],
+      default: undefined,
       validate: {
         validator(value: number[] | undefined) {
           return (
@@ -58,6 +64,33 @@ const videoSchema = new Schema<IVideo>(
         },
         message: `Embedding must contain exactly ${VIDEO_EMBEDDING_VECTOR_LENGTH} numbers`,
       },
+    },
+    embeddingUpdatedAt: {
+      type: Date,
+    },
+    embeddingModel: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
+    embeddingStatus: {
+      type: String,
+      enum: ["pending", "ready", "failed"],
+      default: "pending",
+      index: true,
+    },
+    embeddingLastError: {
+      type: String,
+      maxlength: 2000,
+    },
+    embeddingRetryCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    embeddingNextRetryAt: {
+      type: Date,
+      index: true,
     },
     owner: {
       type: Schema.Types.ObjectId,

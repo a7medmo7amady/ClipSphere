@@ -2,9 +2,9 @@
 
 set -u
 
-BASE_URL="${BASE_URL:-http://localhost:${PORT:-5000}/api/v1}"
 TOTAL=0
 PASSED=0
+SKIPPED=0
 LAST_STATUS=""
 LAST_BODY_FILE=""
 
@@ -16,12 +16,47 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-if [[ -z "${MONGODB_URI:-}" && -f "${SERVER_DIR}/.env" ]]; then
-	set -a
-	# shellcheck disable=SC1091
-	source "${SERVER_DIR}/.env"
-	set +a
+load_env_file() {
+	local env_file="$1"
+
+	while IFS= read -r line || [[ -n "$line" ]]; do
+		line="${line%$'\r'}"
+
+		if [[ -z "${line//[[:space:]]/}" ]]; then
+			continue
+		fi
+
+		if [[ "$line" =~ ^[[:space:]]*# ]]; then
+			continue
+		fi
+
+		if [[ ! "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+			continue
+		fi
+
+		local key="${line%%=*}"
+		local value="${line#*=}"
+
+		key="${key//[[:space:]]/}"
+
+		if [[ "$value" =~ ^\".*\"$ ]]; then
+			value="${value:1:${#value}-2}"
+		elif [[ "$value" =~ ^\'.*\'$ ]]; then
+			value="${value:1:${#value}-2}"
+		fi
+
+		if [[ -z "${!key:-}" ]]; then
+			export "$key=$value"
+		fi
+	done < "$env_file"
+}
+
+if [[ -f "${SERVER_DIR}/.env" ]]; then
+	load_env_file "${SERVER_DIR}/.env"
 fi
+
+PORT="${PORT:-5000}"
+BASE_URL="${API_BASE_URL:-http://localhost:${PORT}/api/v1}"
 
 cleanup() {
 	if [[ -n "${LAST_BODY_FILE}" && -f "${LAST_BODY_FILE}" ]]; then
@@ -152,6 +187,79 @@ assert_body_contains() {
 	fi
 }
 
+assert_json_path_present() {
+	local path_expr="$1"
+	local label="$2"
+
+	TOTAL=$((TOTAL + 1))
+
+	local value
+	value="$(json_get "$LAST_BODY_FILE" "$path_expr" 2>/dev/null || true)"
+
+	if [[ -n "$value" ]]; then
+		PASSED=$((PASSED + 1))
+		echo -e "${GREEN}✓${NC} ${label}"
+	else
+		echo -e "${RED}✗${NC} ${label}"
+		echo "Response body:"
+		cat "$LAST_BODY_FILE"
+		echo
+	fi
+}
+
+assert_json_array_length() {
+	local path_expr="$1"
+	local expected_length="$2"
+	local label="$3"
+
+	TOTAL=$((TOTAL + 1))
+
+	local length
+	length="$(node -e '
+		const fs = require("fs");
+		const filePath = process.argv[1];
+		const pathExpr = process.argv[2];
+		const keys = pathExpr.split(".").filter(Boolean);
+
+		let data;
+		try {
+			data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+		} catch {
+			process.exit(2);
+		}
+
+		let cursor = data;
+		for (const key of keys) {
+			if (cursor == null || !(key in cursor)) {
+				process.exit(3);
+			}
+			cursor = cursor[key];
+		}
+
+		if (!Array.isArray(cursor)) {
+			process.exit(4);
+		}
+
+		process.stdout.write(String(cursor.length));
+	' "$LAST_BODY_FILE" "$path_expr" 2>/dev/null || true)"
+
+	if [[ "$length" == "$expected_length" ]]; then
+		PASSED=$((PASSED + 1))
+		echo -e "${GREEN}✓${NC} ${label}"
+	else
+		echo -e "${RED}✗${NC} ${label} (expected ${expected_length}, got ${length:-<missing>})"
+		echo "Response body:"
+		cat "$LAST_BODY_FILE"
+		echo
+	fi
+}
+
+skip_check() {
+	local label="$1"
+	SKIPPED=$((SKIPPED + 1))
+	echo -e "${YELLOW}-${NC} ${label} (skipped)"
+}
+
 promote_user_to_admin() {
 	local user_id="$1"
 
@@ -194,8 +302,159 @@ promote_user_to_admin() {
 	fi
 }
 
+get_user_recommendation_embedding_status() {
+	local user_id="$1"
+
+	if [[ -z "${MONGODB_URI:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to fetch user embedding status"
+		echo "Set MONGODB_URI in environment or in server/.env"
+		exit 1
+	fi
+
+	(
+		cd "$SERVER_DIR" || exit 1
+		MONGODB_URI="$MONGODB_URI" node -e '
+			const mongoose = require("mongoose");
+
+			async function run() {
+				const uri = process.env.MONGODB_URI;
+				const userId = process.argv[1];
+
+				await mongoose.connect(uri);
+				const user = await mongoose.connection.collection("users").findOne(
+					{ _id: new mongoose.Types.ObjectId(userId) },
+					{ projection: { recommendationEmbeddingStatus: 1 } }
+				);
+				await mongoose.disconnect();
+
+				if (!user) process.exit(2);
+				process.stdout.write(String(user.recommendationEmbeddingStatus || ""));
+			}
+
+			run().catch(() => process.exit(1));
+		' "$user_id"
+	)
+}
+
+get_user_recommendation_embedding_length() {
+	local user_id="$1"
+
+	if [[ -z "${MONGODB_URI:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to fetch user embedding length"
+		echo "Set MONGODB_URI in environment or in server/.env"
+		exit 1
+	fi
+
+	(
+		cd "$SERVER_DIR" || exit 1
+		MONGODB_URI="$MONGODB_URI" node -e '
+			const mongoose = require("mongoose");
+
+			async function run() {
+				const uri = process.env.MONGODB_URI;
+				const userId = process.argv[1];
+
+				await mongoose.connect(uri);
+				const user = await mongoose.connection.collection("users").findOne(
+					{ _id: new mongoose.Types.ObjectId(userId) },
+					{ projection: { recommendationEmbedding: 1 } }
+				);
+				await mongoose.disconnect();
+
+				if (!user) process.exit(2);
+				const value = user.recommendationEmbedding;
+				if (!Array.isArray(value)) {
+					process.stdout.write("0");
+					return;
+				}
+				process.stdout.write(String(value.length));
+			}
+
+			run().catch(() => process.exit(1));
+		' "$user_id"
+	)
+}
+
+assert_equals() {
+	local actual="$1"
+	local expected="$2"
+	local label="$3"
+
+	TOTAL=$((TOTAL + 1))
+
+	if [[ "$actual" == "$expected" ]]; then
+		PASSED=$((PASSED + 1))
+		echo -e "${GREEN}✓${NC} ${label}"
+	else
+		echo -e "${RED}✗${NC} ${label} (expected ${expected}, got ${actual:-<missing>})"
+	fi
+}
+
+get_verification_code_for_email() {
+	local email="$1"
+
+	if [[ -z "${MONGODB_URI:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to fetch verification codes"
+		echo "Set MONGODB_URI in environment or in server/.env"
+		exit 1
+	fi
+
+	(
+		cd "$SERVER_DIR" || exit 1
+		MONGODB_URI="$MONGODB_URI" node -e '
+			const mongoose = require("mongoose");
+
+			async function run() {
+				const uri = process.env.MONGODB_URI;
+				const email = process.argv[1];
+
+				await mongoose.connect(uri);
+				const user = await mongoose.connection.collection("users").findOne(
+					{ email },
+					{ projection: { verificationToken: 1 } }
+				);
+
+				await mongoose.disconnect();
+
+				if (!user || !user.verificationToken) {
+					process.exit(2);
+				}
+
+				process.stdout.write(String(user.verificationToken));
+			}
+
+			run().catch(() => process.exit(1));
+		' "$email"
+	)
+}
+
 print_header "ClipSphere API seed + edge-case test"
 echo "Using BASE_URL=${BASE_URL}"
+echo "(set API_BASE_URL to override)"
+
+EXPECT_EMBEDDINGS="${EXPECT_EMBEDDINGS:-}"
+EMBEDDING_VECTOR_LENGTH_EXPECTED="${VIDEO_EMBEDDING_VECTOR_LENGTH:-768}"
+if [[ -z "$EXPECT_EMBEDDINGS" ]]; then
+	if [[ -n "${GEMINI_API_KEY:-}" ]]; then
+		EXPECT_EMBEDDINGS="true"
+	else
+		EXPECT_EMBEDDINGS="false"
+	fi
+fi
+echo "EXPECT_EMBEDDINGS=${EXPECT_EMBEDDINGS}"
+echo "EMBEDDING_VECTOR_LENGTH_EXPECTED=${EMBEDDING_VECTOR_LENGTH_EXPECTED}"
+
+EXPECT_RECOMMENDATIONS="${EXPECT_RECOMMENDATIONS:-}"
+if [[ -z "$EXPECT_RECOMMENDATIONS" ]]; then
+	# Recommendations require MongoDB Atlas Vector Search ($vectorSearch).
+	# Default to true only when embeddings are expected AND we're likely on Atlas.
+	if [[ "$EXPECT_EMBEDDINGS" == "true" && "${MONGODB_URI:-}" == mongodb+srv://* ]]; then
+		EXPECT_RECOMMENDATIONS="true"
+	else
+		EXPECT_RECOMMENDATIONS="false"
+	fi
+fi
+echo "EXPECT_RECOMMENDATIONS=${EXPECT_RECOMMENDATIONS}"
 
 print_header "Health check"
 api_call "GET" "/health"
@@ -216,10 +475,22 @@ assert_status "201" "Register Alice"
 ALICE_ID="$(json_get "$LAST_BODY_FILE" "data.user.id" 2>/dev/null || true)"
 require_value "$ALICE_ID" "Alice id"
 
+ALICE_VERIFICATION_CODE="$(get_verification_code_for_email "$ALICE_EMAIL" 2>/dev/null || true)"
+require_value "$ALICE_VERIFICATION_CODE" "Alice verification code"
+
+api_call "POST" "/auth/verify-email" "{\"email\":\"${ALICE_EMAIL}\",\"code\":\"${ALICE_VERIFICATION_CODE}\"}"
+assert_status "200" "Verify Alice email"
+
 api_call "POST" "/auth/register" "{\"username\":\"${BOB_USERNAME}\",\"name\":\"Bob\",\"email\":\"${BOB_EMAIL}\",\"password\":\"${PASSWORD}\"}"
 assert_status "201" "Register Bob"
 BOB_ID="$(json_get "$LAST_BODY_FILE" "data.user.id" 2>/dev/null || true)"
 require_value "$BOB_ID" "Bob id"
+
+BOB_VERIFICATION_CODE="$(get_verification_code_for_email "$BOB_EMAIL" 2>/dev/null || true)"
+require_value "$BOB_VERIFICATION_CODE" "Bob verification code"
+
+api_call "POST" "/auth/verify-email" "{\"email\":\"${BOB_EMAIL}\",\"code\":\"${BOB_VERIFICATION_CODE}\"}"
+assert_status "200" "Verify Bob email"
 
 api_call "POST" "/auth/register" "{\"username\":\"dup_${suffix}\",\"name\":\"Dup\",\"email\":\"${ALICE_EMAIL}\",\"password\":\"${PASSWORD}\"}"
 assert_status "409" "Reject duplicate email"
@@ -261,6 +532,15 @@ assert_status "201" "Create public video"
 PUBLIC_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
 require_value "$PUBLIC_VIDEO_ID" "public video id"
 
+print_header "Embeddings: generation checks"
+if [[ "$EXPECT_EMBEDDINGS" == "true" ]]; then
+	assert_json_path_present "data.video.embeddingModel" "Video response includes embedding model"
+	assert_json_path_present "data.video.embeddingUpdatedAt" "Video response includes embeddingUpdatedAt"
+	assert_json_array_length "data.video.embedding" "$EMBEDDING_VECTOR_LENGTH_EXPECTED" "Video response includes embedding vector (${EMBEDDING_VECTOR_LENGTH_EXPECTED} dims)"
+else
+	skip_check "Embedding assertions disabled (set EXPECT_EMBEDDINGS=true with working Vertex config)"
+fi
+
 api_call "POST" "/videos" "{\"title\":\"Alice Private Video\",\"description\":\"Private test video\",\"videoURL\":\"minio/${suffix}-private.mp4\",\"duration\":60,\"status\":\"private\"}" "$ALICE_TOKEN"
 assert_status "201" "Create private video"
 PRIVATE_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
@@ -270,6 +550,12 @@ api_call "POST" "/videos" "{\"title\":\"Bob Video\",\"description\":\"Video for 
 assert_status "201" "Create Bob video"
 BOB_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
 require_value "$BOB_VIDEO_ID" "Bob video id"
+
+if [[ "$EXPECT_EMBEDDINGS" == "true" ]]; then
+	assert_json_array_length "data.video.embedding" "$EMBEDDING_VECTOR_LENGTH_EXPECTED" "Bob video response includes embedding vector (${EMBEDDING_VECTOR_LENGTH_EXPECTED} dims)"
+else
+	skip_check "Bob embedding assertions disabled"
+fi
 
 api_call "GET" "/videos"
 assert_status "200" "Fetch public video feed"
@@ -286,11 +572,49 @@ else
 	echo -e "${GREEN}✓${NC} Private video hidden from feed"
 fi
 
+print_header "Watch history + recommendations"
+
+api_call "POST" "/watch-history" "{\"videoId\":\"${PUBLIC_VIDEO_ID}\",\"watchDuration\":12,\"completed\":false}" "$ALICE_TOKEN"
+assert_status "201" "Log watch history: Alice watches her public video"
+
+api_call "POST" "/watch-history" "{\"videoId\":\"${BOB_VIDEO_ID}\",\"watchDuration\":20,\"completed\":false}" "$ALICE_TOKEN"
+assert_status "201" "Log watch history: Alice watches Bob video"
+
+if [[ "$EXPECT_RECOMMENDATIONS" == "true" ]]; then
+	# Recompute stored user embeddings so /recommendations/feed can use them without on-demand averaging.
+	(
+		cd "$SERVER_DIR" || exit 1
+		USER_EMBEDDINGS_RECOMPUTE_LIMIT=20 USER_EMBEDDINGS_HISTORY_LIMIT=20 npm run embeddings:users:recompute >/dev/null
+	)
+	assert_equals "$?" "0" "Recompute stored user recommendation embeddings"
+
+	ALICE_RECO_STATUS="$(get_user_recommendation_embedding_status "$ALICE_ID" 2>/dev/null || true)"
+	assert_equals "$ALICE_RECO_STATUS" "ready" "Alice stored recommendationEmbeddingStatus is ready"
+
+	ALICE_RECO_LEN="$(get_user_recommendation_embedding_length "$ALICE_ID" 2>/dev/null || true)"
+	assert_equals "$ALICE_RECO_LEN" "$EMBEDDING_VECTOR_LENGTH_EXPECTED" "Alice stored recommendation embedding has ${EMBEDDING_VECTOR_LENGTH_EXPECTED} dims"
+
+	api_call "GET" "/recommendations/feed?limit=6&historyLimit=20" "" "$ALICE_TOKEN"
+	assert_status "200" "Get recommendation feed (Alice)"
+	assert_json_path_present "data.videos" "Recommendation feed includes videos array"
+
+	api_call "GET" "/videos/${PUBLIC_VIDEO_ID}/recommendations?limit=6"
+	assert_status "200" "Get similar videos for public video"
+	assert_json_path_present "data.videos" "Similar videos response includes videos array"
+else
+	skip_check "Recommendation assertions disabled (set EXPECT_RECOMMENDATIONS=true on Atlas Vector Search)"
+fi
+
 api_call "PATCH" "/videos/${PUBLIC_VIDEO_ID}" "{\"title\":\"Bob tries to edit\"}" "$BOB_TOKEN"
 assert_status "403" "Reject non-owner video update"
 
 api_call "PATCH" "/videos/${PUBLIC_VIDEO_ID}" "{\"title\":\"Alice Updated Title\"}" "$ALICE_TOKEN"
 assert_status "200" "Allow owner to update video"
+if [[ "$EXPECT_EMBEDDINGS" == "true" ]]; then
+	assert_json_path_present "data.video.embeddingUpdatedAt" "Video update refreshes embedding timestamp"
+else
+	skip_check "Embedding refresh assertion disabled"
+fi
 
 api_call "DELETE" "/videos/${PUBLIC_VIDEO_ID}" "" "$BOB_TOKEN"
 assert_status "403" "Reject non-owner/non-admin delete"
@@ -370,7 +694,7 @@ api_call "DELETE" "/videos/${PRIVATE_VIDEO_ID}" "" "$ALICE_TOKEN"
 assert_status "200" "Owner deletes private video"
 
 echo
-echo "Result: ${PASSED}/${TOTAL} checks passed"
+echo "Result: ${PASSED}/${TOTAL} checks passed (${SKIPPED} skipped)"
 
 if [[ "$PASSED" -ne "$TOTAL" ]]; then
 	exit 1

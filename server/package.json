@@ -10,12 +10,15 @@
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "sync:indexes": "ts-node src/scripts/syncIndexes.ts",
-    "seed:test": "bash src/scripts/seed.sh"
+    "seed:test": "bash src/scripts/seed.sh",
+    "embeddings:retry": "ts-node src/scripts/retryEmbeddings.ts",
+    "embeddings:users:recompute": "ts-node src/scripts/recomputeUserEmbeddings.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^1.50.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",

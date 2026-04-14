@@ -1,0 +1,66 @@
+/api/v1/recommendations/feed:
+  get:
+    tags: [Recommendations]
+    summary: Get a personalized recommendation feed for the authenticated user
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Max number of videos to return (1-50)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 12
+      - name: historyLimit
+        in: query
+        required: false
+        description: Max watch history entries to consider (1-200)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    responses:
+      '200':
+        description: List of recommended videos (falls back to trending when no stored user embedding is available)
+      '401':
+        description: Missing/invalid token
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+
+/api/v1/videos/{id}/recommendations:
+  get:
+    tags: [Recommendations]
+    summary: Get videos similar to a given video
+    security: []
+    parameters:
+      - $ref: '#/components/parameters/VideoIdParam'
+      - name: limit
+        in: query
+        required: false
+        description: Max number of videos to return (1-50)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 12
+    responses:
+      '200':
+        description: List of similar videos
+      '404':
+        description: Video not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '409':
+        description: Video embedding is not available yet
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
