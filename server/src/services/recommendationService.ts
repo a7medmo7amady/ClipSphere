@@ -99,29 +99,83 @@ function weightedAverageVectors(vectors: number[][], weights: number[]) {
 async function trendingVideos(limit: number) {
   const safeLimit = Math.max(1, Math.min(limit, 50));
 
-  const results = await Video.find({ status: "public" })
-    .sort({ trendingScore: -1, createdAt: -1 })
-    .limit(safeLimit)
-    .select({
-      title: 1,
-      description: 1,
-      tags: 1,
-      owner: 1,
-      videoURL: 1,
-      duration: 1,
-      viewsCount: 1,
-      reviewsCount: 1,
-      avgRating: 1,
-      trendingScore: 1,
-      status: 1,
-      embeddingUpdatedAt: 1,
-      embeddingModel: 1,
-      createdAt: 1,
-      updatedAt: 1,
-    })
-    .lean();
+  const now = new Date();
+  const msPerDay = 86_400_000;
+
+  const results = await Video.aggregate([
+    { $match: { status: "public" } },
+    {
+      $lookup: {
+        from: "reviews",
+        let: { videoId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+          {
+            $group: {
+              _id: null,
+              avgRating: { $avg: "$rating" },
+              reviewsCount: { $sum: 1 },
+            },
+          },
+        ],
+        as: "reviewStats",
+      },
+    },
+    {
+      $set: {
+        avgRating: {
+          $ifNull: [{ $first: "$reviewStats.avgRating" }, 0],
+        },
+        reviewsCount: {
+          $ifNull: [{ $first: "$reviewStats.reviewsCount" }, 0],
+        },
+      },
+    },
+    {
+      $set: {
+        ageDays: {
+          $divide: [{ $subtract: [now, "$createdAt"] }, msPerDay],
+        },
+      },
+    },
+    {
+      $set: {
+        recencyFactor: {
+          $divide: [1, { $add: [1, "$ageDays"] }],
+        },
+        score: {
+          $add: ["$avgRating", { $divide: [1, { $add: [1, "$ageDays"] }] }],
+        },
+      },
+    },
+    { $sort: { score: -1, createdAt: -1 } },
+    { $limit: safeLimit },
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        tags: 1,
+        owner: 1,
+        videoURL: 1,
+        duration: 1,
+        viewsCount: 1,
+        reviewsCount: 1,
+        avgRating: 1,
+        status: 1,
+        embeddingUpdatedAt: 1,
+        embeddingModel: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        score: 1,
+      },
+    },
+  ]);
 
   return results;
+}
+
+export async function recommendTrendingVideos(limit = 12) {
+  return trendingVideos(limit);
 }
 
 export async function recommendVideosByVector(

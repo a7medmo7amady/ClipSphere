@@ -580,6 +580,21 @@ assert_status "201" "Log watch history: Alice watches her public video"
 api_call "POST" "/watch-history" "{\"videoId\":\"${BOB_VIDEO_ID}\",\"watchDuration\":20,\"completed\":false}" "$ALICE_TOKEN"
 assert_status "201" "Log watch history: Alice watches Bob video"
 
+# Trending feed should still work even when the user has no stored
+# recommendation embedding yet (falls back to trending aggregation).
+api_call "GET" "/recommendations/feed?limit=6" "" "$ALICE_TOKEN"
+assert_status "200" "Get trending videos (feed fallback before embedding recompute)"
+assert_json_path_present "data.videos" "Trending feed includes videos array"
+assert_json_path_present "data.videos.0.score" "Trending feed includes computed score"
+assert_json_path_present "data.videos.0.avgRating" "Trending feed includes avgRating"
+
+# Trending should also be accessible directly (public endpoint).
+api_call "GET" "/recommendations/trending?limit=6"
+assert_status "200" "Get trending videos (public trending endpoint)"
+assert_json_path_present "data.videos" "Trending endpoint includes videos array"
+assert_json_path_present "data.videos.0.score" "Trending endpoint includes computed score"
+assert_json_path_present "data.videos.0.avgRating" "Trending endpoint includes avgRating"
+
 if [[ "$EXPECT_RECOMMENDATIONS" == "true" ]]; then
 	# Recompute stored user embeddings so /recommendations/feed can use them without on-demand averaging.
 	(

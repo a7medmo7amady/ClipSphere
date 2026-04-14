@@ -33,6 +33,25 @@
             schema:
               $ref: '#/components/schemas/ErrorResponse'
 
+/api/v1/recommendations/trending:
+  get:
+    tags: [Recommendations]
+    summary: Get trending videos
+    security: []
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Max number of videos to return (1-50)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 12
+    responses:
+      '200':
+        description: List of trending videos
+
 /api/v1/videos/{id}/recommendations:
   get:
     tags: [Recommendations]

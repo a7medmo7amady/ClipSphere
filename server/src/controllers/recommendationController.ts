@@ -2,6 +2,7 @@ import catchAsync from "../utils/catchAsync";
 import AppError from "../utils/AppError";
 import {
   recommendSimilarVideos,
+  recommendTrendingVideos,
   recommendVideosForUser,
 } from "../services/recommendationService";
 
@@ -37,6 +38,19 @@ export const userRecommendationFeedController = catchAsync(async (req, res, next
     limit,
     historyLimit,
   });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      videos,
+      count: videos.length,
+    },
+  });
+});
+
+export const trendingVideosController = catchAsync(async (req, res) => {
+  const limit = parseLimit(req.query.limit);
+  const videos = await recommendTrendingVideos(limit ?? 12);
 
   res.status(200).json({
     status: "success",
