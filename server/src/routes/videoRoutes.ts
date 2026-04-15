@@ -1,9 +1,11 @@
 import express from "express";
 import protect from "../middleware/protect";
+import upload from "../middleware/upload";
 import { validateBody } from "../middleware/validate";
 import {
   createVideoController,
   getAllPublicVideosController,
+  getVideoController,
   updateVideoController,
   deleteVideoController,
   createReviewController,
@@ -21,7 +23,14 @@ import {
 const router = express.Router();
 
 router.get("/", getAllPublicVideosController);
-router.post("/", protect, validateBody(createVideoSchema), createVideoController);
+router.get("/:id", getVideoController);
+router.post(
+  "/",
+  protect,
+  upload.single("video"),
+  validateBody(createVideoSchema),
+  createVideoController
+);
 router.patch(
   "/:id",
   protect,
