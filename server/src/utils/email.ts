@@ -8,13 +8,15 @@ interface ISendMail {
 
 export class MailService {
     async send({ to, subject, message, }: ISendMail) {
-        var transporter = nodemailer.createTransport ({
-        host: process.env.EMAIL_HOST as string,
-        port: Number(process.env.EMAIL_PORT),
-        auth:{
-            user:process.env.EMAIL_USER,
-            pass:process.env.EMAIL_PASS,
-        }});
+        var transporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST as string,
+          port: Number(process.env.EMAIL_PORT),
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
       var mailOptions = {
         from: `"ClipSphere" <${process.env.EMAIL_USER}>`,
         to,

@@ -21,6 +21,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +67,8 @@ export default function Auth() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to register");
-      setError("Registration successful! Check your email to verify.");
+      setSuccess("Account created! Redirecting to email verification...");
+      setTimeout(() => router.push(`/verify?email=${encodeURIComponent(email)}`), 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -89,7 +91,7 @@ export default function Auth() {
         </div>
 
         <Card className="p-8 bg-zinc-900 border-zinc-800">
-          <Tabs defaultValue="login" className="space-y-6">
+          <Tabs defaultValue="login" className="space-y-6" onValueChange={() => { setError(""); setSuccess(""); }}>
             <TabsList className="w-full bg-zinc-800 border border-zinc-700">
               <TabsTrigger value="login" className="flex-1">
                 Sign In
@@ -166,6 +168,11 @@ export default function Auth() {
             {/* Register Form */}
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
+                {success && (
+                  <div className="p-3 text-sm text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-md">
+                    {success}
+                  </div>
+                )}
                 {error && (
                   <div className="p-3 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-md">
                     {error}
