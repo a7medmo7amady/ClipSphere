@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Upload as UploadIcon, X, Video, AlertCircle, CheckCircle2, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,7 @@ export default function Upload() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
@@ -43,10 +44,15 @@ export default function Upload() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setError(null);
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!selected.type.startsWith("video/")) {
+      setError("Please select a video file (MP4, MOV, AVI, WebM).");
+      e.target.value = "";
+      return;
     }
+    setFile(selected);
+    setError(null);
   };
 
   const handleUpload = async () => {
@@ -157,20 +163,19 @@ export default function Upload() {
                   </h3>
                   <p className="text-zinc-400 mb-6">or click to browse</p>
                   <input
+                    ref={fileInputRef}
                     type="file"
-                    id="video-upload"
-                    accept="video/*"
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <label htmlFor="video-upload">
-                    <Button size="lg" className="bg-violet-600 hover:bg-violet-700 cursor-pointer" asChild>
-                      <span>
-                        <UploadIcon className="w-5 h-5 mr-2" />
-                        Select Video File
-                      </span>
-                    </Button>
-                  </label>
+                  <Button
+                    size="lg"
+                    className="bg-violet-600 hover:bg-violet-700 cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <UploadIcon className="w-5 h-5 mr-2" />
+                    Select Video File
+                  </Button>
                   <p className="text-sm text-zinc-500 mt-4">
                     Supports: MP4, MOV, AVI (Max duration: 5 minutes)
                   </p>

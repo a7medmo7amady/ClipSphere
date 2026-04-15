@@ -49,7 +49,7 @@ export const createVideoController = catchAsync(async (req, res, next) => {
     await s3.send(new PutObjectCommand(uploadParams));
   } catch (err: any) {
     console.error("S3 Upload Error:", err);
-    return next(new AppError("Failed to upload video to storage", 500));
+    return next(new AppError(`S3 Error: ${err?.message || err?.code || JSON.stringify(err)}`, 500));
   }
 
   // Create video record with the S3 key

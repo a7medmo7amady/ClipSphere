@@ -25,7 +25,6 @@ const router = express.Router();
 
 router.get("/", getAllPublicVideosController);
 router.get("/:id/recommendations", similarVideosController);
-router.post("/", protect, validateBody(createVideoSchema), createVideoController);
 router.get("/:id", getVideoController);
 router.post(
   "/",

@@ -9,8 +9,6 @@ export const createVideoSchema = z
     title: z.string().trim().min(1).max(150),
     description: z.string().trim().max(5000).optional(),
     tags: tagsSchema.optional(),
-    videoURL: z.string().trim().min(1).max(1024),
-    duration: z.number().min(0).max(300),
     status: z.enum(["public", "private"]).optional(),
   })
   .strict();
