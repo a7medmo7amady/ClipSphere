@@ -648,8 +648,9 @@
                   "});",
                   "",
                   "const json = pm.response.json();",
-                  "if (json && json.data && json.data.video) {",
-                  "  pm.collectionVariables.set('targetVideoId', json.data.video._id);",
+                  "const videoId = json?.data?.video?._id;",
+                  "if (videoId) {",
+                  "  pm.collectionVariables.set('targetVideoId', videoId);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -680,6 +681,7 @@
             ],
             "body": {
               "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"tags\": [\"highlights\", \"edited\"]\n}"
               "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"description\": \"Updated description\"\n}"
             },
             "url": {
@@ -702,6 +704,28 @@
               ]
             }
           },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "item": [
+        {
+          "name": "Get Feed",
           "response": []
         },
         {
@@ -717,6 +741,9 @@
                 }
               ]
             },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/feed?limit=12&historyLimit=50",
             "method": "DELETE",
             "header": [],
             "url": {
@@ -727,6 +754,42 @@
               "path": [
                 "api",
                 "v1",
+                "recommendations",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12"
+                },
+                {
+                  "key": "historyLimit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 409', function () {",
+                  "  pm.expect([200, 409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Similar Videos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/recommendations?limit=12",
                 "videos",
                 ":id"
               ],
@@ -775,12 +838,75 @@
                 "v1",
                 "videos",
                 ":id",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
                 "reviews"
               ],
               "variable": [
                 {
                   "key": "id",
                   "value": "{{targetVideoId}}",
+                  "description": "ID of the video to find similar videos for"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200, 404, or 409', function () {",
+                  "  pm.expect([200, 404, 409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Trending Videos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/trending?limit=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "trending"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
                   "description": "ID of the video to review"
                 }
               ]
@@ -817,6 +943,7 @@
       "key": "targetVideoId",
       "value": "",
       "type": "string",
+      "description": "ID of the target video for video update endpoint"
       "description": "ID of the target video for GET/PATCH/DELETE endpoints"
     }
   ]

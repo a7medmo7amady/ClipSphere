@@ -1,5 +1,6 @@
 import mongoose, { type HydratedDocument } from "mongoose";
 import bcrypt from "bcryptjs";
+import { VIDEO_EMBEDDING_VECTOR_LENGTH } from "../config/vector";
 
 export type PublicUser = {
   id: string;
@@ -44,6 +45,11 @@ export interface IUser {
   };
   createdAt: Date;
   updatedAt: Date;
+
+  recommendationEmbedding?: number[];
+  recommendationEmbeddingUpdatedAt?: Date;
+  recommendationEmbeddingStatus?: "pending" | "ready" | "failed";
+  recommendationEmbeddingLastError?: string;
 
   comparePassword(candidate: string): Promise<boolean>;
   toPublicJSON(): PublicUser;
@@ -118,6 +124,34 @@ const userSchema = new mongoose.Schema<IUser>(
         likes: { type: Boolean, default: false },
         tips: { type: Boolean, default: false },
       },
+    },
+
+    recommendationEmbedding: {
+      type: [Number],
+      default: undefined,
+      select: false,
+      validate: {
+        validator(value: number[] | undefined) {
+          return value === undefined || value.length === VIDEO_EMBEDDING_VECTOR_LENGTH;
+        },
+        message: `Recommendation embedding must contain exactly ${VIDEO_EMBEDDING_VECTOR_LENGTH} numbers`,
+      },
+    },
+    recommendationEmbeddingUpdatedAt: {
+      type: Date,
+      select: false,
+    },
+    recommendationEmbeddingStatus: {
+      type: String,
+      enum: ["pending", "ready", "failed"],
+      default: "pending",
+      select: false,
+      index: true,
+    },
+    recommendationEmbeddingLastError: {
+      type: String,
+      maxlength: 2000,
+      select: false,
     },
   },
   { timestamps: true }
