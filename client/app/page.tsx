@@ -1,114 +1,163 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
-import Navbar from "@/components/Navbar";
-import Button from "@/components/ui/Button";
-
-const stats = [
-  {
-    value: "1.2M+",
-    label: "Total Videos",
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.31a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-  {
-    value: "250K+",
-    label: "Active Creators",
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-  {
-    value: "50M+",
-    label: "Views Today",
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-    ),
-  },
-  {
-    value: "100M hrs",
-    label: "Watch Time",
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-];
-
-const PlayIcon = (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M8 5v14l11-7z" />
-  </svg>
-);
+import { Play, TrendingUp, Users, Video } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function Home() {
+  const stats = [
+    { icon: Video, label: "Total Videos", value: "1.2M+", color: "text-[#663399]" },
+    { icon: Users, label: "Active Creators", value: "250K+", color: "text-[#7d3fb8]" },
+    { icon: TrendingUp, label: "Views Today", value: "50M+", color: "text-cyan-500" },
+    { icon: Play, label: "Watch Time", value: "100M hrs", color: "text-emerald-500" },
+  ];
+
+  const featuredCategories = [
+    { name: "Gaming", count: "250K videos", image: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&h=500&fit=crop" },
+    { name: "Music", count: "180K videos", image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&h=500&fit=crop" },
+    { name: "Education", count: "120K videos", image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=500&fit=crop" },
+    { name: "Comedy", count: "300K videos", image: "https://images.unsplash.com/photo-1527224538127-2104bb45c51b?w=800&h=500&fit=crop" },
+  ];
+
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <Sidebar />
+    <div className="min-h-screen">
+      <div>
+        {/* Hero Section */}
+        <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-b from-zinc-950/20 via-zinc-950/50 to-zinc-950 z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920&h=1080&fit=crop" 
+            alt="Hero"
+            className="absolute inset-0 w-full h-full object-cover scale-105 animate-pulse-slow"
+          />
 
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Navbar />
-
-        <main className="flex-1 overflow-y-auto">
-       
-          <div className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: "420px" }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-background via-sidebar to-background" />
-            <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--sidebar-primary) 10%, transparent), transparent, color-mix(in srgb, var(--sidebar-primary) 5%, transparent))" }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-
-            <div className="relative z-10 text-center px-6 py-16">
-              <span className="inline-block mb-6 px-4 py-1.5 rounded-full border border-border bg-background/50 backdrop-blur-sm text-sm text-foreground/70">
+          {/* Hero Content */}
+          <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
+            <div className="mb-6 inline-block">
+              <span className="px-4 py-2 rounded-full bg-[#663399]/20 text-[#663399] text-sm font-medium border border-[#663399]/30">
                 Welcome to ClipSphere
               </span>
-
-              <h1 className="text-5xl font-bold tracking-tight text-foreground mb-4 leading-tight">
-                Share Your Story in
-                <br />
-                <span style={{ color: "var(--sidebar-primary)" }}>300 Seconds</span>
-              </h1>
-
-              <p className="max-w-lg mx-auto text-foreground/60 text-lg mb-8 leading-relaxed">
-                Join the next generation of creators. Upload, share, and monetize your
-                short videos with our powerful platform.
-              </p>
-
-              <div className="flex items-center justify-center gap-4">
-                <Button variant="primary" size="lg" icon={PlayIcon}>
+            </div>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-300 mb-6 leading-tight">
+              Share Your Story in
+              <span className="block bg-linear-to-r from-[#663399] via-[#7d3fb8] to-[#9b59d6] bg-clip-text text-transparent">
+                300 Seconds
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-zinc-300 mb-8 max-w-2xl mx-auto">
+              Join the next generation of creators. Upload, share, and monetize your short videos with our powerful platform.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/discover">
+                <Button size="lg" className="bg-[#663399] hover:bg-[#7d3fb8] text-white px-8">
+                  <Play className="w-5 h-5 mr-2" />
                   Start Watching
                 </Button>
-                <Button variant="outline" size="lg">
+              </Link>
+              <Link href="/upload">
+                <Button size="lg" variant="outline" className="border-zinc-700 text-gray-300 hover:bg-zinc-800 hover:text-[#7d3fb8] px-8">
                   Upload Your First Video
                 </Button>
-              </div>
+              </Link>
             </div>
           </div>
+        </section>
 
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 p-6">
-            {stats.map(({ value, label, icon }) => (
-              <div
-                key={label}
-                className="bg-card border border-border rounded-xl p-6 flex flex-col items-center gap-3"
-              >
-                <div style={{ color: "var(--sidebar-primary)" }}>{icon}</div>
-                <div className="text-2xl font-bold text-foreground">{value}</div>
-                <div className="text-sm text-muted-foreground">{label}</div>
+        {/* Stats Section */}
+        <section className="py-12 px-4 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map((stat, idx) => (
+              <Card key={idx} className="p-6 bg-zinc-900 border-zinc-800">
+                <div className="flex flex-col items-center text-center">
+                  <stat.icon className={`w-8 h-8 mb-3 ${stat.color}`} />
+                  <p className="text-2xl md:text-3xl font-bold text-gray-300 mb-1">{stat.value}</p>
+                  <p className="text-sm text-zinc-400">{stat.label}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Featured Categories */}
+        <section className="py-12 px-4 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-300">Explore Categories</h2>
+            <Link href="/discover">
+              <Button variant="ghost" className="text-[#663399] hover:text-[#7d3fb8]">
+                View All
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredCategories.map((category, idx) => (
+              <Link key={idx} href="/discover" className="group relative h-64 rounded-2xl overflow-hidden">
+                <div className="absolute inset-0 bg-linear-to-t from-zinc-950/90 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <h3 className="text-xl font-bold text-white mb-1">{category.name}</h3>
+                  <p className="text-sm text-zinc-300">{category.count}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-16 px-4 max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-300 mb-4">Why ClipSphere?</h2>
+            <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
+              Professional-grade features for creators of all sizes
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Real-Time Engagement",
+                description: "Instant notifications, live interactions, and Socket.io powered real-time updates.",
+                icon: "🚀",
+              },
+              {
+                title: "Monetization Built-In",
+                description: "Accept tips from fans with Stripe integration. Turn your passion into profit.",
+                icon: "💰",
+              },
+              {
+                title: "Advanced Analytics",
+                description: "Track views, engagement, and revenue with detailed creator dashboards.",
+                icon: "📊",
+              },
+            ].map((feature, idx) => (
+              <div key={idx} className="p-8 rounded-2xl bg-linear-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 text-center hover:border-violet-500/50 transition-colors">
+                <div className="text-5xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-gray-300 mb-3">{feature.title}</h3>
+                <p className="text-zinc-400 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
-        </main>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 px-4 max-w-7xl mx-auto mb-12">
+          <Card className="p-12 bg-gradient-to-r from-[#663399] to-[#7d3fb8] border-0 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Ready to Start Creating?
+            </h2>
+            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+              Join thousands of creators already sharing their stories on ClipSphere
+            </p>
+            <Link href="/auth">
+              <Button size="lg" className="bg-white text-[#663399] hover:bg-zinc-100 px-8">
+                Sign Up Free
+              </Button>
+            </Link>
+          </Card>
+        </section>
       </div>
     </div>
   );

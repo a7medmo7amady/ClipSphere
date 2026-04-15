@@ -126,7 +126,7 @@ api_call() {
 		-o "$LAST_BODY_FILE"
 		-w "%{http_code}"
 		-X "$method"
-		"${BASE_URL}${endpoint}"
+		"${API_BASE_URL}${endpoint}"
 		-H "Content-Type: application/json"
 	)
 
@@ -395,6 +395,11 @@ get_verification_code_for_email() {
 
 	if [[ -z "${MONGODB_URI:-}" ]]; then
 		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to fetch verification codes"
+fetch_verification_code() {
+	local email="$1"
+
+	if [[ -z "${MONGODB_URI:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} MONGODB_URI is required to fetch verification code during seed"
 		echo "Set MONGODB_URI in environment or in server/.env"
 		exit 1
 	fi
@@ -455,6 +460,7 @@ if [[ -z "$EXPECT_RECOMMENDATIONS" ]]; then
 	fi
 fi
 echo "EXPECT_RECOMMENDATIONS=${EXPECT_RECOMMENDATIONS}"
+echo "Using BASE_URL=${API_BASE_URL}"
 
 print_header "Health check"
 api_call "GET" "/health"
@@ -474,6 +480,10 @@ api_call "POST" "/auth/register" "{\"username\":\"${ALICE_USERNAME}\",\"name\":\
 assert_status "201" "Register Alice"
 ALICE_ID="$(json_get "$LAST_BODY_FILE" "data.user.id" 2>/dev/null || true)"
 require_value "$ALICE_ID" "Alice id"
+ALICE_VERIFY_CODE="$(fetch_verification_code "$ALICE_EMAIL" 2>/dev/null || true)"
+require_value "$ALICE_VERIFY_CODE" "Alice verification code"
+api_call "POST" "/auth/verify-email" "{\"email\":\"${ALICE_EMAIL}\",\"code\":\"${ALICE_VERIFY_CODE}\"}"
+assert_status "200" "Verify Alice email"
 
 ALICE_VERIFICATION_CODE="$(get_verification_code_for_email "$ALICE_EMAIL" 2>/dev/null || true)"
 require_value "$ALICE_VERIFICATION_CODE" "Alice verification code"
@@ -485,6 +495,10 @@ api_call "POST" "/auth/register" "{\"username\":\"${BOB_USERNAME}\",\"name\":\"B
 assert_status "201" "Register Bob"
 BOB_ID="$(json_get "$LAST_BODY_FILE" "data.user.id" 2>/dev/null || true)"
 require_value "$BOB_ID" "Bob id"
+BOB_VERIFY_CODE="$(fetch_verification_code "$BOB_EMAIL" 2>/dev/null || true)"
+require_value "$BOB_VERIFY_CODE" "Bob verification code"
+api_call "POST" "/auth/verify-email" "{\"email\":\"${BOB_EMAIL}\",\"code\":\"${BOB_VERIFY_CODE}\"}"
+assert_status "200" "Verify Bob email"
 
 BOB_VERIFICATION_CODE="$(get_verification_code_for_email "$BOB_EMAIL" 2>/dev/null || true)"
 require_value "$BOB_VERIFICATION_CODE" "Bob verification code"

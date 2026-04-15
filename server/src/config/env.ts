@@ -25,6 +25,12 @@ function parseEmbeddingsMode(value: string | undefined, env: string): Embeddings
   return env === "production" ? "best-effort" : "strict";
 }
 
+const rawVerificationCodeExpiry = process.env.VERIFICATION_CODE_EXPIRES_IN;
+const parsedVerificationCodeExpiry = Number.parseInt(
+  rawVerificationCodeExpiry ?? "10",
+  10
+);
+
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
     const message =
@@ -49,6 +55,10 @@ const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiEmbeddingModel: process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001",
   mongoVideoVectorIndexName: process.env.MONGO_VIDEO_VECTOR_INDEX_NAME || "videos_embedding_index",
+  verificationCodeExpiresInMinutes:
+    Number.isNaN(parsedVerificationCodeExpiry) || parsedVerificationCodeExpiry <= 0
+      ? 10
+      : parsedVerificationCodeExpiry,
 };
 
 export default config;
