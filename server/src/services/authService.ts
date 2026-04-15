@@ -7,7 +7,7 @@ import { MailService, verificationEmailTemplate } from "../utils/email";
 
 const mailService = new MailService();
 
-function signToken(userId: string) {
+export function signToken(userId: string) {
   return jwt.sign({ id: userId }, config.jwtSecret, {
     expiresIn: config.jwtExpiresIn,
   });

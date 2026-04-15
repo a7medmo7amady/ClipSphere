@@ -8,16 +8,6 @@ dotenv.config({
 
 const requiredEnv = ["PORT", "MONGODB_URI", "JWT_SECRET"] as const;
 
-const parsedVerificationCodeExpiresInMinutes = Number(
-  process.env.VERIFICATION_CODE_EXPIRES_IN ?? "10"
-);
-
-const verificationCodeExpiresInMinutes =
-  Number.isFinite(parsedVerificationCodeExpiresInMinutes) &&
-  parsedVerificationCodeExpiresInMinutes > 0
-    ? parsedVerificationCodeExpiresInMinutes
-    : 10;
-
 type EmbeddingsMode = "strict" | "best-effort";
 
 function parseEmbeddingsMode(value: string | undefined, env: string): EmbeddingsMode {
@@ -25,11 +15,15 @@ function parseEmbeddingsMode(value: string | undefined, env: string): Embeddings
   return env === "production" ? "best-effort" : "strict";
 }
 
-const rawVerificationCodeExpiry = process.env.VERIFICATION_CODE_EXPIRES_IN;
 const parsedVerificationCodeExpiry = Number.parseInt(
-  rawVerificationCodeExpiry ?? "10",
+  process.env.VERIFICATION_CODE_EXPIRES_IN ?? "10",
   10
 );
+
+const verificationCodeExpiresInMinutes =
+  Number.isNaN(parsedVerificationCodeExpiry) || parsedVerificationCodeExpiry <= 0
+    ? 10
+    : parsedVerificationCodeExpiry;
 
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
@@ -55,11 +49,6 @@ const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiEmbeddingModel: process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001",
   mongoVideoVectorIndexName: process.env.MONGO_VIDEO_VECTOR_INDEX_NAME || "videos_embedding_index",
-  verificationCodeExpiresInMinutes:
-    Number.isNaN(parsedVerificationCodeExpiry) || parsedVerificationCodeExpiry <= 0
-      ? 10
-      : parsedVerificationCodeExpiry,
 };
 
 export default config;
-

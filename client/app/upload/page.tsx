@@ -237,7 +237,7 @@ export default function Upload() {
           <Alert className="bg-blue-500/10 border-blue-500/50">
             <AlertCircle className="h-4 w-4 text-blue-500" />
             <AlertDescription className="text-blue-500">
-              <strong>Backend Validation:</strong> Videos will be validated using fluent-ffmpeg to ensure they don't exceed 300 seconds (5 minutes). Invalid files will be rejected and deleted automatically.
+              <strong>Warning</strong> Videos can not exceed 300 seconds (5 minutes). Invalid files will not be uploaded.
             </AlertDescription>
           </Alert>
 
