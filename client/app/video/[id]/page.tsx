@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, use } from "react";
-import { Heart, Share2, Flag, DollarSign, MessageCircle, Send, Star, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { useState, use, useEffect } from "react";
+import { Heart, Share2, Flag, DollarSign, MessageCircle, Send, Star, MoreVertical, Edit, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,39 +17,138 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const API = "http://localhost:5000/api/v1";
+
 export default function VideoPlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { user } = useAuth();
+  
   const [liked, setLiked] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  // Mock video data
-  const video = {
-    id: id,
-    title: "Amazing Sunset Timelapse in 4K",
-    description: "Captured this beautiful sunset over 4 hours. Shot in 4K with my new camera setup. Hope you enjoy!",
-    videoUrl: "https://videos.unsplash.com/video/1511379938547-c1f69419868d?w=1920&h=1080",
-    thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop",
-    creator: {
-      id: "2",
-      name: "Sarah Kim",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-      followers: 125000,
-      isFollowing: false,
-    },
-    views: 125430,
-    likes: 8945,
-    duration: "4:32",
-    uploadedAt: "2 days ago",
-    rating: 4.8,
-    totalReviews: 234,
+  const [video, setVideo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  
+  const [shareText, setShareText] = useState("Share");
+
+  function authHeaders(): Record<string, string> {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  }
+
+  useEffect(() => {
+    async function fetchAll() {
+      try {
+        const [videoRes, reviewsRes] = await Promise.all([
+          fetch(`${API}/videos/${id}`),
+          fetch(`${API}/videos/${id}/reviews`)
+        ]);
+        
+        if (!videoRes.ok) throw new Error("Video not found");
+        const videoData = await videoRes.json();
+        setVideo(videoData.data.video);
+        
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          setReviews(reviewsData.data.reviews || []);
+        }
+
+        const ownerId = videoData.data.video.owner?._id || videoData.data.video.owner?.id;
+        if (ownerId && user) {
+          const followRes = await fetch(`${API}/users/${ownerId}/followers`);
+          if (followRes.ok) {
+            const followData = await followRes.json();
+            const follows = followData.data.followers.some((f: any) => f._id === user.id || f.id === user.id);
+            setIsFollowing(follows);
+          }
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAll();
+  }, [id, user]);
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareText("Copied!");
+      setTimeout(() => setShareText("Share"), 2000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const comments = [
-    { id: "1", user: "Marcus Lee", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop", text: "This is absolutely stunning! What camera did you use?", time: "3 hours ago", likes: 24 },
-    { id: "2", user: "Nina Patel", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop", text: "The colors are incredible 🌅", time: "5 hours ago", likes: 18 },
-    { id: "3", user: "Alex Chen", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop", text: "Great work! Inspired me to try timelapse photography.", time: "1 day ago", likes: 32 },
-  ];
+  const handleFollow = async () => {
+    if (!user) return alert("Please log in to follow");
+    const ownerId = video?.owner?._id || video?.owner?.id;
+    if (!ownerId || ownerId === user.id) return;
+    
+    setFollowLoading(true);
+    try {
+      const method = isFollowing ? "DELETE" : "POST";
+      const endpoint = isFollowing ? `${API}/users/${ownerId}/unfollow` : `${API}/users/${ownerId}/follow`;
+      const res = await fetch(endpoint, { method, headers: authHeaders() });
+      if (res.ok) {
+        setIsFollowing(!isFollowing);
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) return alert("Please log in to leave a review");
+    if (rating === 0) return setReviewError("Please select a rating");
+    if (!comment.trim()) return setReviewError("Please enter a comment");
+    if (comment.trim().length < 10) return setReviewError("Comment must be at least 10 characters long");
+    
+    setReviewLoading(true);
+    setReviewError("");
+    
+    try {
+      const res = await fetch(`${API}/videos/${id}/reviews`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ rating, comment }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to submit review");
+      }
+      
+      const newReview = data.data.review;
+      newReview.user = { _id: user.id, username: user.username, name: user.name, avatarKey: user.avatarKey };
+      
+      setReviews([newReview, ...reviews]);
+      setComment("");
+      setRating(0);
+      
+      setVideo((prev: any) => ({
+        ...prev,
+        reviewsCount: (prev.reviewsCount || 0) + 1
+      }));
+    } catch (err: any) {
+      setReviewError(err.message);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
 
   const relatedVideos = [
     { id: "2", title: "Mountain Sunrise", thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=600&fit=crop", views: "98K", duration: "3:45" },
@@ -56,44 +156,52 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     { id: "4", title: "Ocean Waves", thumbnail: "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=600&fit=crop", views: "234K", duration: "5:00" },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !video) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-zinc-400">{error || "Video not found"}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Video Section */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Video Player */}
+
             <Card className="overflow-hidden bg-zinc-900 border-zinc-800">
-              <div className="relative aspect-video bg-zinc-950">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
+              <div className="relative aspect-video bg-zinc-950 flex items-center justify-center max-h-[80vh]">
+                <video
+                  src={video.videoURL}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Button size="lg" className="w-20 h-20 rounded-full bg-violet-600/90 hover:bg-violet-700">
-                    <svg className="w-10 h-10 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </Button>
-                </div>
               </div>
             </Card>
 
-            {/* Video Info */}
             <Card className="p-6 bg-zinc-900 border-zinc-800">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h1 className="text-2xl font-bold text-white mb-2">{video.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-zinc-400">
-                    <span>{video.views.toLocaleString()} views</span>
+                    <span>{video.viewsCount?.toLocaleString() || 0} views</span>
                     <span>•</span>
-                    <span>{video.uploadedAt}</span>
+                    <span>{new Date(video.createdAt).toLocaleDateString()}</span>
                     <span>•</span>
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-white">{video.rating}</span>
-                      <span>({video.totalReviews})</span>
+                      <span className="text-white">{video.avgRating?.toFixed(1) || 0}</span>
+                      <span>({video.reviewsCount || 0})</span>
                     </div>
                   </div>
                 </div>
@@ -124,11 +232,11 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
                   onClick={() => setLiked(!liked)}
                 >
                   <Heart className={`w-5 h-5 mr-2 ${liked ? "fill-current" : ""}`} />
-                  {liked ? "Liked" : "Like"} ({video.likes.toLocaleString()})
+                  {liked ? "Liked" : "Like"}
                 </Button>
-                <Button variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white">
-                  <Share2 className="w-5 h-5 mr-2" />
-                  Share
+                <Button variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white" onClick={handleShare}>
+                  {shareText === "Copied!" ? <Check className="w-5 h-5 mr-2 text-green-400" /> : <Share2 className="w-5 h-5 mr-2" />}
+                  {shareText}
                 </Button>
                 <Button variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white">
                   <DollarSign className="w-5 h-5 mr-2" />
@@ -143,22 +251,26 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
 
               {/* Creator Info */}
               <div className="flex items-center justify-between">
-                <Link href={`/profile/${video.creator.id}`} className="flex items-center gap-4">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={video.creator.avatar} />
-                    <AvatarFallback>{video.creator.name[0]}</AvatarFallback>
+                <Link href={`/profile/${video.owner?._id || video.owner?.id}`} className="flex items-center gap-4">
+                  <Avatar className="w-12 h-12 ring-2 ring-violet-500/20 hover:ring-violet-500/50 transition-all">
+                    {video.owner?.avatarKey && (
+                      <AvatarImage src={`http://localhost:9000/clipsphere/${video.owner.avatarKey}`} />
+                    )}
+                    <AvatarFallback className="bg-violet-600">{(video.owner?.name || video.owner?.username || "U")[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold text-white hover:text-violet-400 transition-colors">
-                      {video.creator.name}
+                      {video.owner?.name || video.owner?.username}
                     </p>
-                    <p className="text-sm text-zinc-400">
-                      {video.creator.followers.toLocaleString()} followers
-                    </p>
+                    <p className="text-sm text-zinc-400">@{video.owner?.username}</p>
                   </div>
                 </Link>
-                <Button className="bg-violet-600 hover:bg-violet-700">
-                  {video.creator.isFollowing ? "Following" : "Follow"}
+                <Button 
+                  className={isFollowing ? "bg-zinc-700 hover:bg-zinc-600" : "bg-violet-600 hover:bg-violet-700"}
+                  onClick={handleFollow}
+                  disabled={followLoading || !!(user && user.id === (video.owner?._id || video.owner?.id))}
+                >
+                  {followLoading ? "..." : isFollowing ? "Following" : "Follow"}
                 </Button>
               </div>
 
@@ -195,43 +307,48 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
                 className="bg-zinc-800 border-zinc-700 text-white mb-4"
                 rows={3}
               />
-              <Button className="bg-violet-600 hover:bg-violet-700" disabled={rating === 0}>
+              {reviewError && <p className="text-red-500 text-sm mb-4">{reviewError}</p>}
+              <Button 
+                className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50" 
+                disabled={rating === 0 || reviewLoading || !comment.trim()}
+                onClick={handleSubmitReview}
+              >
                 <Send className="w-4 h-4 mr-2" />
-                Submit Review
+                {reviewLoading ? "Submitting..." : "Submit Review"}
               </Button>
             </Card>
 
             {/* Comments Section */}
             <Card className="p-6 bg-zinc-900 border-zinc-800">
               <h3 className="text-lg font-bold text-white mb-6">
-                Comments <Badge className="ml-2 bg-zinc-800">{comments.length}</Badge>
+                Comments <Badge className="ml-2 bg-zinc-800">{video.reviewsCount || 0}</Badge>
               </h3>
               <div className="space-y-6">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-4">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={comment.avatar} />
-                      <AvatarFallback>{comment.user[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-white">{comment.user}</span>
-                        <span className="text-sm text-zinc-500">{comment.time}</span>
-                      </div>
-                      <p className="text-zinc-300 mb-2">{comment.text}</p>
-                      <div className="flex items-center gap-4">
-                        <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white px-0">
-                          <Heart className="w-4 h-4 mr-1" />
-                          {comment.likes}
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white px-0">
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          Reply
-                        </Button>
+                {reviews.length === 0 ? (
+                  <p className="text-zinc-500">No reviews yet. Be the first to review!</p>
+                ) : (
+                  reviews.map((review: any) => (
+                    <div key={review._id} className="flex gap-4">
+                      <Avatar className="w-10 h-10 ring-1 ring-zinc-700">
+                        {review.user?.avatarKey && (
+                          <AvatarImage src={`http://localhost:9000/clipsphere/${review.user.avatarKey}`} />
+                        )}
+                        <AvatarFallback className="bg-zinc-800">{(review.user?.name || review.user?.username || "U")[0]?.toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-white">{review.user?.name || review.user?.username}</span>
+                          <span className="text-sm text-zinc-500">{new Date(review.createdAt).toLocaleDateString()}</span>
+                          <div className="flex items-center ml-3">
+                             <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 mr-1" />
+                             <span className="text-xs text-zinc-400">{review.rating}</span>
+                          </div>
+                        </div>
+                        <p className="text-zinc-300 mb-2">{review.comment}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </Card>
           </div>

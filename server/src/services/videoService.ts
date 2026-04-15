@@ -106,6 +106,26 @@ export async function createVideo(ownerId: string, payload: CreateVideoPayload) 
   }
 }
 
+export async function getVideosByOwner(ownerId: string) {
+  const videos = await Video.find({ owner: ownerId, status: "public" })
+    .sort({ createdAt: -1 })
+    .populate("owner", "username name avatarKey");
+
+  const videosWithUrls = await Promise.all(
+    videos.map(async (v) => {
+      const video = v.toObject();
+      try {
+        video.videoURL = await createDownloadUrl(video.videoURL);
+      } catch (error) {
+        console.error(`Failed to generate download URL for video ${video._id}:`, error);
+      }
+      return video;
+    })
+  );
+
+  return videosWithUrls;
+}
+
 export async function getAllPublicVideos() {
   const videos = await Video.find({ status: "public" })
     .sort({ createdAt: -1 })
@@ -220,4 +240,12 @@ export async function createReview(videoId: string, userId: string, payload: Cre
 
     throw error;
   }
+}
+
+export async function getReviewsByVideo(videoId: string) {
+  const reviews = await Review.find({ video: videoId })
+    .sort({ createdAt: -1 })
+    .populate("user", "username name avatarKey");
+
+  return reviews;
 }

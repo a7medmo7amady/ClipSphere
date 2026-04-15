@@ -1,7 +1,8 @@
 import express from "express";
-import { registerController, loginController, verifyEmailController } from "../controllers/authController";
+import { registerController, loginController, verifyEmailController, changePasswordController } from "../controllers/authController";
 import { validateBody } from "../middleware/validate";
-import { registerSchema, loginSchema } from "../validation/authSchemas";
+import protect from "../middleware/protect";
+import { registerSchema, loginSchema, changePasswordSchema } from "../validation/authSchemas";
 import { signToken } from "../services/authService";
 import passport from "passport";
 const router = express.Router();
@@ -9,6 +10,7 @@ const router = express.Router();
 router.post("/register", validateBody(registerSchema), registerController);
 router.post("/login", validateBody(loginSchema), loginController);
 router.post("/verify-email", verifyEmailController);
+router.patch("/change-password", protect, validateBody(changePasswordSchema), changePasswordController);
 
 
 router.get("/google",passport.authenticate("google", { scope: ["profile", "email"], session: false }));

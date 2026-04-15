@@ -9,6 +9,7 @@ import {
   updateVideoController,
   deleteVideoController,
   createReviewController,
+  getReviewsController,
 } from "../controllers/videoController";
 import { similarVideosController } from "../controllers/recommendationController";
 import {
@@ -47,5 +48,6 @@ router.post(
   validateBody(createReviewSchema),
   createReviewController
 );
+router.get("/:id/reviews", getReviewsController);
 
 export default router;

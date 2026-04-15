@@ -7,21 +7,15 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
-
- 
-  const user = {
-    id: "1",
-    name: "Alex Chen",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
-    role: "admin",
-    notifications: 3
-  };
-
-  const isAuthPage = pathname === "/auth";
+  
+  const { user, isLoading } = useAuth();
+  const isAuthPage = pathname === "/auth" || pathname === "/oauth";
 
   if (isAuthPage) {
     return (
@@ -33,18 +27,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Header */}
+   
       <header className="fixed top-0 left-0 right-0 z-50 bg-zinc-900/80 backdrop-blur-xl border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo */}
+
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-[#663399] flex items-center justify-center">
               <span className="text-white font-bold text-xl">CS</span>
             </div>
             <span className="text-xl font-bold text-gray-300">ClipSphere</span>
           </Link>
-
-          {/* Search Bar - Desktop */}
           <div className="hidden md:flex flex-1 max-w-xl mx-8">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -60,11 +52,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="relative text-zinc-400 hover:text-gray-300">
               <Bell className="w-5 h-5" />
-              {user.notifications > 0 && (
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-red-500 text-xs">
-                  {user.notifications}
-                </Badge>
-              )}
             </Button>
             <Link href="/upload">
               <Button className="bg-[#663399] hover:bg-[#7d3fb8]">
@@ -72,12 +59,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 Upload
               </Button>
             </Link>
-            <Link href={`/profile/${user.id}`}>
-              <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-[#663399]/20 hover:ring-[#663399]/50 transition-all">
-                <AvatarImage src={user.avatar} />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-            </Link>
+            {isLoading ? (
+              <div className="w-9 h-9 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-[#663399]" />
+              </div>
+            ) : user ? (
+              <Link href={`/profile/1`}>
+                <Avatar className="w-9 h-9 cursor-pointer ring-2 ring-[#663399]/20 hover:ring-[#663399]/50 transition-all">
+                  <AvatarImage src={user.avatar || ""} />
+                  <AvatarFallback>{(user.name || user.username).substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+              </Link>
+            ) : (
+              <Link href="/auth">
+                <Button variant="secondary" size="sm">Sign In</Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -137,7 +134,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </Button>
           </Link>
-          {user.role === "admin" && (
+          {user?.role === "admin" && (
             <Link href="/admin" className="flex-1">
               <Button
                 variant="ghost"
@@ -151,7 +148,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </Link>
           )}
-          <Link href={`/profile/${user.id}`} className="flex-1">
+          <Link href={user ? `/profile/1` : "/auth"} className="flex-1">
             <Button
               variant="ghost"
               size="sm"
@@ -191,7 +188,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               Discover
             </Button>
           </Link>
-          {user.role === "admin" && (
+          {user?.role === "admin" && (
             <Link href="/admin">
               <Button
                 variant={isActive("/admin") ? "secondary" : "ghost"}
