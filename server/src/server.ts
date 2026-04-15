@@ -9,7 +9,7 @@ async function startServer() {
 
   app.listen(config.port, () => {
     // eslint-disable-next-line no-console
-    console.log(`🚀 Server running on port ${config.port} in ${config.env} mode`);
+    console.log(`Server running on port ${config.port} in ${config.env} mode`);
   });
 }
 
