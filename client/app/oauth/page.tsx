@@ -13,7 +13,12 @@ export default function OAuthCallback() {
     const token = searchParams.get("token");
     if (token) {
       localStorage.setItem("token", token);
-      router.push("/");
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        router.push(`/profile/${payload.id}`);
+      } catch {
+        router.push("/");
+      }
     } else {
       setError("No authentication token received");
       setTimeout(() => {
