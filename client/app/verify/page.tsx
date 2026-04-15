@@ -75,7 +75,7 @@ export default function VerifyEmail() {
 
       localStorage.setItem("token", data.token);
       setSuccess(true);
-      setTimeout(() => router.push("/"), 1500);
+      setTimeout(() => router.push(`/profile/${data.data.user.id}`), 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {

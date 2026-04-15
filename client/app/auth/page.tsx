@@ -36,7 +36,7 @@ export default function Auth() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to login");
       localStorage.setItem("token", data.token);
-      router.push("/");
+      router.push(`/profile/${data.data.user.id}`);
     } catch (err: any) {
       setError(err.message);
     } finally {
