@@ -7,6 +7,7 @@ import {
   updateVideo,
   deleteVideo,
   createReview,
+  getReviewsByVideo,
 } from "../services/videoService";
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../config/s3";
@@ -49,7 +50,7 @@ export const createVideoController = catchAsync(async (req, res, next) => {
     await s3.send(new PutObjectCommand(uploadParams));
   } catch (err: any) {
     console.error("S3 Upload Error:", err);
-    return next(new AppError(`S3 Error: ${err?.message || err?.code || JSON.stringify(err)}`, 500));
+    return next(new AppError("Failed to upload video to storage", 500));
   }
 
   // Create video record with the S3 key
@@ -129,5 +130,17 @@ export const createReviewController = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: "success",
     data: { review },
+  });
+});
+
+export const getReviewsController = catchAsync(async (req, res, next) => {
+  const videoId = req.params.id?.toString();
+  if (!videoId) return next(new AppError("Video ID is required", 400));
+
+  const reviews = await getReviewsByVideo(videoId);
+
+  res.status(200).json({
+    status: "success",
+    data: { reviews },
   });
 });

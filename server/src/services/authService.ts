@@ -70,6 +70,18 @@ export async function verifyEmail(email: string, code: string) {
   return { user, token: authToken };
 }
 
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await User.findById(userId).select("+password");
+  if (!user) throw new AppError("User not found", 404);
+
+  const ok = await user.comparePassword(currentPassword);
+  if (!ok) throw new AppError("Current password is incorrect", 401);
+
+  user.password = newPassword;
+  await user.save();
+  return user;
+}
+
 export async function login(payload: { email: string; password: string }) {
   const user = await User.findOne({ email: payload.email }).select("+password");
   if (!user) throw new AppError("Invalid email or password", 401);
