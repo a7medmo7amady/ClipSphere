@@ -12,7 +12,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
 
-  // Mock user data
+ 
   const user = {
     id: "1",
     name: "Alex Chen",

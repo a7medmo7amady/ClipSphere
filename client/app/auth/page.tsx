@@ -11,9 +11,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (password.length <= 6) {
+      setError("Password must be greater than 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -46,7 +70,6 @@ export default function Auth() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Login Form */}
             <TabsContent value="login">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -104,7 +127,12 @@ export default function Auth() {
 
             {/* Register Form */}
             <TabsContent value="register">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-4">
+                {error && (
+                  <div className="p-3 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-md">
+                    {error}
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="register-username" className="text-zinc-300">
                     Username
@@ -149,11 +177,11 @@ export default function Auth() {
                       placeholder="Create a strong password"
                       className="pl-10 bg-zinc-800 border-zinc-700 text-white"
                       required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1">
-                    Password will be hashed using Bcrypt with salt factor of 10
-                  </p>
+
                 </div>
 
                 <div>
@@ -168,6 +196,8 @@ export default function Auth() {
                       placeholder="Confirm your password"
                       className="pl-10 bg-zinc-800 border-zinc-700 text-white"
                       required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                   </div>
                 </div>
@@ -202,7 +232,6 @@ export default function Auth() {
 
           <Separator className="my-6 bg-zinc-800" />
 
-          {/* OAuth Options */}
           <div className="space-y-3">
             <p className="text-center text-sm text-zinc-400 mb-4">Or continue with</p>
             <Button variant="outline" className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800">
@@ -235,12 +264,6 @@ export default function Auth() {
           </div>
         </Card>
 
-        {/* Security Note */}
-        <div className="mt-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-          <p className="text-sm text-blue-400 text-center">
-            🔒 Secured with JWT authentication & Bcrypt password hashing
-          </p>
-        </div>
       </div>
     </div>
   );
