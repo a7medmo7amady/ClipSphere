@@ -681,7 +681,6 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"tags\": [\"highlights\", \"edited\"]\n}"
               "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"description\": \"Updated description\"\n}"
             },
             "url": {
@@ -718,15 +717,6 @@
             }
           ],
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Recommendations",
-      "item": [
-        {
-          "name": "Get Feed",
-          "response": []
         },
         {
           "name": "Delete Video",
@@ -741,13 +731,124 @@
                 }
               ]
             },
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/recommendations/feed?limit=12&historyLimit=50",
             "method": "DELETE",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/videos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}",
+                  "description": "ID of the video to delete"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Add Review",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great video! Highly recommended.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "reviews"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}",
+                  "description": "ID of the video to review"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200, 404, or 409', function () {",
+                  "  pm.expect([200, 404, 409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "item": [
+        {
+          "name": "Get Feed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/feed?limit=12&historyLimit=50",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -790,46 +891,6 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/v1/videos/:id/recommendations?limit=12",
-                "videos",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{targetVideoId}}",
-                  "description": "ID of the video to delete"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Review",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great video! Highly recommended.\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/videos/:id/reviews",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -845,7 +906,6 @@
                   "key": "limit",
                   "value": "12"
                 }
-                "reviews"
               ],
               "variable": [
                 {
@@ -856,19 +916,6 @@
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200, 404, or 409', function () {",
-                  "  pm.expect([200, 404, 409]).to.include(pm.response.code);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -907,11 +954,6 @@
               }
             }
           ],
-                  "description": "ID of the video to review"
-                }
-              ]
-            }
-          },
           "response": []
         }
       ]
@@ -943,7 +985,6 @@
       "key": "targetVideoId",
       "value": "",
       "type": "string",
-      "description": "ID of the target video for video update endpoint"
       "description": "ID of the target video for GET/PATCH/DELETE endpoints"
     }
   ]
