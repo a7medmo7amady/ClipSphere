@@ -1,10 +1,17 @@
 import Video from "../models/Video";
 import Review from "../models/Review";
 import AppError from "../utils/AppError";
+import config from "../config/env";
+import {
+  ACTIVE_VIDEO_EMBEDDING_MODEL,
+  generateVideoEmbedding,
+} from "./embeddingService";
+import { createDownloadUrl, deleteFile } from "../utils/presign";
 
 type CreateVideoPayload = {
   title: string;
   description?: string;
+  tags?: string[];
   videoURL: string;
   duration: number;
   status?: "public" | "private";
@@ -13,6 +20,7 @@ type CreateVideoPayload = {
 type UpdateVideoPayload = {
   title?: string;
   description?: string;
+  tags?: string[];
 };
 
 type CreateReviewPayload = {
@@ -20,17 +28,82 @@ type CreateReviewPayload = {
   comment: string;
 };
 
+async function refreshVideoEmbedding(videoId: string) {
+  const video = await Video.findById(videoId);
+  if (!video) throw new AppError("Video not found", 404);
+
+  const embedding = await generateVideoEmbedding({
+    title: video.title,
+    description: video.description,
+    tags: video.tags,
+    duration: video.duration,
+  });
+
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      embedding,
+      embeddingUpdatedAt: new Date(),
+      embeddingModel: ACTIVE_VIDEO_EMBEDDING_MODEL,
+      embeddingStatus: "ready",
+      embeddingLastError: undefined,
+      embeddingNextRetryAt: undefined,
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedVideo) throw new AppError("Video not found", 404);
+  return updatedVideo;
+}
+
+function safeErrorString(error: unknown) {
+  if (error instanceof Error) return error.stack || error.message;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function computeNextRetryAt(retryCount: number) {
+  const baseMs = 30_000; // 30s
+  const maxMs = 15 * 60_000; // 15m
+  const delayMs = Math.min(maxMs, baseMs * Math.pow(2, Math.min(retryCount, 5)));
+  return new Date(Date.now() + delayMs);
+}
+
 export async function createVideo(ownerId: string, payload: CreateVideoPayload) {
   const video = await Video.create({
     title: payload.title,
     description: payload.description ?? "",
+    tags: payload.tags ?? [],
     owner: ownerId,
     videoURL: payload.videoURL,
     duration: payload.duration,
     status: payload.status ?? "public",
   });
 
-  return video;
+  try {
+    return await refreshVideoEmbedding(video._id.toString());
+  } catch (error) {
+    const errorText = safeErrorString(error).slice(0, 2000);
+    console.error("[embedding] createVideo embedding update failed", {
+      videoId: video._id.toString(),
+      error: errorText,
+    });
+
+    const retryCount = (video.embeddingRetryCount ?? 0) + 1;
+    await Video.findByIdAndUpdate(video._id, {
+      embeddingStatus: "failed",
+      embeddingLastError: errorText,
+      embeddingRetryCount: retryCount,
+      embeddingNextRetryAt: computeNextRetryAt(retryCount),
+      embeddingModel: ACTIVE_VIDEO_EMBEDDING_MODEL,
+    });
+
+    if (config.embeddingsMode === "strict") throw error;
+    return video;
+  }
 }
 
 export async function getAllPublicVideos() {
@@ -38,7 +111,38 @@ export async function getAllPublicVideos() {
     .sort({ createdAt: -1 })
     .populate("owner", "username name avatarKey");
 
-  return videos;
+  // Generate presigned URLs for each video
+  const videosWithUrls = await Promise.all(
+    videos.map(async (v) => {
+      const video = v.toObject();
+      try {
+        // Assume videoURL stores the S3 key
+        video.videoURL = await createDownloadUrl(video.videoURL);
+      } catch (error) {
+        console.error(`Failed to generate download URL for video ${video._id}:`, error);
+        // Fallback to original or null if failed
+      }
+      return video;
+    })
+  );
+
+  return videosWithUrls;
+}
+
+export async function getVideo(videoId: string) {
+  const video = await Video.findById(videoId)
+    .populate("owner", "username name avatarKey");
+
+  if (!video) throw new AppError("Video not found", 404);
+
+  const videoObj = video.toObject();
+  try {
+    videoObj.videoURL = await createDownloadUrl(videoObj.videoURL);
+  } catch (error) {
+    console.error(`Failed to generate download URL for video ${videoId}:`, error);
+  }
+
+  return videoObj;
 }
 
 export async function updateVideo(videoId: string, payload: UpdateVideoPayload) {
@@ -46,6 +150,7 @@ export async function updateVideo(videoId: string, payload: UpdateVideoPayload) 
 
   if (payload.title !== undefined) updates.title = payload.title;
   if (payload.description !== undefined) updates.description = payload.description;
+  if (payload.tags !== undefined) updates.tags = payload.tags;
 
   const video = await Video.findByIdAndUpdate(videoId, updates, {
     new: true,
@@ -53,12 +158,46 @@ export async function updateVideo(videoId: string, payload: UpdateVideoPayload) 
   });
 
   if (!video) throw new AppError("Video not found", 404);
-  return video;
+
+  const shouldRefreshEmbedding =
+    payload.title !== undefined ||
+    payload.description !== undefined ||
+    payload.tags !== undefined;
+
+  if (!shouldRefreshEmbedding) return video;
+
+  try {
+    return await refreshVideoEmbedding(videoId);
+  } catch (error) {
+    const errorText = safeErrorString(error).slice(0, 2000);
+    console.error("[embedding] updateVideo embedding update failed", {
+      videoId,
+      error: errorText,
+    });
+
+    const retryCount = (video.embeddingRetryCount ?? 0) + 1;
+    await Video.findByIdAndUpdate(videoId, {
+      embeddingStatus: "failed",
+      embeddingLastError: errorText,
+      embeddingRetryCount: retryCount,
+      embeddingNextRetryAt: computeNextRetryAt(retryCount),
+      embeddingModel: ACTIVE_VIDEO_EMBEDDING_MODEL,
+    });
+
+    if (config.embeddingsMode === "strict") throw error;
+    return video;
+  }
 }
 
 export async function deleteVideo(videoId: string) {
-  const video = await Video.findByIdAndDelete(videoId);
+  const video = await Video.findById(videoId);
   if (!video) throw new AppError("Video not found", 404);
+
+  // Delete from S3
+  await deleteFile(video.videoURL);
+
+  // Delete from DB
+  await video.deleteOne();
 }
 
 export async function createReview(videoId: string, userId: string, payload: CreateReviewPayload) {

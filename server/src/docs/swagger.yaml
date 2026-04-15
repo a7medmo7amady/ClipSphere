@@ -13,6 +13,8 @@ tags:
   - name: Auth
   - name: Users
   - name: Videos
+  - name: Watch History
+  - name: Recommendations
   - name: Admin
 
 components: {}
