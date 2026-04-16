@@ -7,6 +7,7 @@ import watchHistoryRoutes from "./watchHistoryRoutes";
 import adminRoutes from "./adminRoutes";
 import docsRoutes from "./docsRoutes";
 import recommendationRoutes from "./recommendationRoutes";
+import notificationRoutes from "./notificationRoutes";
 
 const router = express.Router();
 
@@ -18,6 +19,7 @@ router.use("/api/v1/videos", videoRoutes);
 router.use("/api/v1/watch-history", watchHistoryRoutes);
 router.use("/api/v1/recommendations", recommendationRoutes);
 router.use("/api/v1/admin", adminRoutes);
+router.use("/api/v1/notifications", notificationRoutes);
 
 export default router;
 

@@ -9,6 +9,12 @@ import {
   updateVideoController,
   deleteVideoController,
   createReviewController,
+  getReviewsController,
+  likeVideoController,
+  unlikeVideoController,
+  checkLikeStatusController,
+  viewVideoController,
+  getFollowingVideosController,
 } from "../controllers/videoController";
 import { similarVideosController } from "../controllers/recommendationController";
 import {
@@ -24,8 +30,8 @@ import {
 const router = express.Router();
 
 router.get("/", getAllPublicVideosController);
+router.get("/feed/following", protect, getFollowingVideosController);
 router.get("/:id/recommendations", similarVideosController);
-router.post("/", protect, validateBody(createVideoSchema), createVideoController);
 router.get("/:id", getVideoController);
 router.post(
   "/",
@@ -48,5 +54,12 @@ router.post(
   validateBody(createReviewSchema),
   createReviewController
 );
+router.get("/:id/reviews", getReviewsController);
+
+router.post("/:id/like", protect, likeVideoController);
+router.delete("/:id/like", protect, unlikeVideoController);
+router.get("/:id/like/status", protect, checkLikeStatusController);
+
+router.post("/:id/view", viewVideoController);
 
 export default router;

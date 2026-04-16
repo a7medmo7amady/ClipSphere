@@ -7,7 +7,7 @@ import { MailService, verificationEmailTemplate } from "../utils/email";
 
 const mailService = new MailService();
 
-function signToken(userId: string) {
+export function signToken(userId: string) {
   return jwt.sign({ id: userId }, config.jwtSecret, {
     expiresIn: config.jwtExpiresIn,
   });
@@ -68,6 +68,18 @@ export async function verifyEmail(email: string, code: string) {
 
   const authToken = signToken(user._id.toString());
   return { user, token: authToken };
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await User.findById(userId).select("+password");
+  if (!user) throw new AppError("User not found", 404);
+
+  const ok = await user.comparePassword(currentPassword);
+  if (!ok) throw new AppError("Current password is incorrect", 401);
+
+  user.password = newPassword;
+  await user.save();
+  return user;
 }
 
 export async function login(payload: { email: string; password: string }) {

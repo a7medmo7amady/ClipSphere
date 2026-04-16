@@ -1,5 +1,6 @@
 import catchAsync from "../utils/catchAsync";
-import { register, login, verifyEmail } from "../services/authService";
+import { register, login, verifyEmail, changePassword } from "../services/authService";
+import AppError from "../utils/AppError";
 
 export const registerController = catchAsync(async (req, res) => {
   const { user } = await register(req.body);
@@ -21,6 +22,13 @@ export const loginController = catchAsync(async (req, res) => {
       user: user.toPublicJSON(),
     },
   });
+});
+
+export const changePasswordController = catchAsync(async (req, res, next) => {
+  if (!req.user) return next(new AppError("Authentication required", 401));
+  const { currentPassword, newPassword } = req.body;
+  await changePassword(req.user._id.toString(), currentPassword, newPassword);
+  res.status(200).json({ status: "success", message: "Password updated successfully." });
 });
 
 export const verifyEmailController = catchAsync(async (req, res) => {

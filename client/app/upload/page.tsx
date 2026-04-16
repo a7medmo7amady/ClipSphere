@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Upload as UploadIcon, X, Video, AlertCircle, CheckCircle2, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,12 @@ export default function Upload() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -31,47 +37,110 @@ export default function Upload() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setFile(e.dataTransfer.files[0]);
+      setError(null);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!selected.type.startsWith("video/")) {
+      setError("Please select a video file (MP4, MOV, AVI, WebM).");
+      e.target.value = "";
+      return;
+    }
+    setFile(selected);
+    setError(null);
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to upload.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("video", file);
+    formData.append("title", title.trim());
+    if (description.trim()) formData.append("description", description.trim());
+    formData.append("status", visibility);
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status === 201) {
+            resolve();
+          } else {
+            let message = "Upload failed.";
+            try {
+              const body = JSON.parse(xhr.responseText);
+              message = body.message || message;
+            } catch {
+              
+            }
+            reject(new Error(message));
+          }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Network error during upload.")));
+        xhr.addEventListener("abort", () => reject(new Error("Upload was cancelled.")));
+
+        xhr.open("POST", "http://localhost:5000/api/v1/videos");
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.send(formData);
+      });
+
+      setUploadComplete(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const simulateUpload = () => {
-    setUploading(true);
+  const handleReset = () => {
+    setFile(null);
+    setUploadComplete(false);
     setUploadProgress(0);
-
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          setUploadComplete(true);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 300);
+    setError(null);
+    setTitle("");
+    setDescription("");
+    setVisibility("public");
   };
 
   return (
     <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Upload Video</h1>
           <p className="text-zinc-400">Share your story with the world (max 5 minutes)</p>
         </div>
 
-        {/* Upload Form */}
+     
         <div className="space-y-6">
-          {/* File Upload Area */}
+        
           <Card className="p-8 bg-zinc-900 border-zinc-800">
             {!file ? (
               <div
@@ -94,20 +163,19 @@ export default function Upload() {
                   </h3>
                   <p className="text-zinc-400 mb-6">or click to browse</p>
                   <input
+                    ref={fileInputRef}
                     type="file"
-                    id="video-upload"
-                    accept="video/*"
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <label htmlFor="video-upload">
-                    <Button size="lg" className="bg-violet-600 hover:bg-violet-700 cursor-pointer" asChild>
-                      <span>
-                        <UploadIcon className="w-5 h-5 mr-2" />
-                        Select Video File
-                      </span>
-                    </Button>
-                  </label>
+                  <Button
+                    size="lg"
+                    className="bg-violet-600 hover:bg-violet-700 cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <UploadIcon className="w-5 h-5 mr-2" />
+                    Select Video File
+                  </Button>
                   <p className="text-sm text-zinc-500 mt-4">
                     Supports: MP4, MOV, AVI (Max duration: 5 minutes)
                   </p>
@@ -131,12 +199,9 @@ export default function Upload() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => {
-                      setFile(null);
-                      setUploadComplete(false);
-                      setUploadProgress(0);
-                    }}
+                    onClick={handleReset}
                     className="text-zinc-400 hover:text-white"
+                    disabled={uploading}
                   >
                     <X className="w-5 h-5" />
                   </Button>
@@ -146,7 +211,7 @@ export default function Upload() {
                 {uploading && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-400">Uploading to MinIO...</span>
+                      <span className="text-zinc-400">Uploading...</span>
                       <span className="text-white font-medium">{uploadProgress}%</span>
                     </div>
                     <Progress value={uploadProgress} className="h-2" />
@@ -160,6 +225,14 @@ export default function Upload() {
                     <AlertDescription className="text-emerald-500">
                       Video uploaded successfully to MinIO storage!
                     </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Error */}
+                {error && (
+                  <Alert className="bg-red-500/10 border-red-500/50">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                    <AlertDescription className="text-red-500">{error}</AlertDescription>
                   </Alert>
                 )}
               </div>
@@ -177,7 +250,10 @@ export default function Upload() {
                   </Label>
                   <Input
                     id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     placeholder="Give your video a catchy title"
+                    maxLength={150}
                     className="mt-1.5 bg-zinc-800 border-zinc-700 text-white"
                   />
                 </div>
@@ -188,66 +264,46 @@ export default function Upload() {
                   </Label>
                   <Textarea
                     id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tell viewers about your video..."
                     rows={4}
+                    maxLength={5000}
                     className="mt-1.5 bg-zinc-800 border-zinc-700 text-white resize-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category" className="text-zinc-300">
-                      Category
-                    </Label>
-                    <select
-                      id="category"
-                      title="Video Category"
-                      className="mt-1.5 w-full h-10 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-white"
-                    >
-                      <option>Gaming</option>
-                      <option>Music</option>
-                      <option>Education</option>
-                      <option>Comedy</option>
-                      <option>Tech</option>
-                      <option>Cooking</option>
-                      <option>Fitness</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="visibility" className="text-zinc-300">
-                      Visibility
-                    </Label>
-                    <select
-                      id="visibility"
-                      title="Video Visibility"
-                      className="mt-1.5 w-full h-10 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-white"
-                    >
-                      <option>Public</option>
-                      <option>Private</option>
-                    </select>
-                  </div>
+                <div>
+                  <Label htmlFor="visibility" className="text-zinc-300">
+                    Visibility
+                  </Label>
+                  <select
+                    id="visibility"
+                    title="Video Visibility"
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value as "public" | "private")}
+                    className="mt-1.5 w-full h-10 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-white"
+                  >
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
                 </div>
               </div>
             </Card>
           )}
-
-          {/* Validation Info */}
           <Alert className="bg-blue-500/10 border-blue-500/50">
             <AlertCircle className="h-4 w-4 text-blue-500" />
             <AlertDescription className="text-blue-500">
-              <strong>Backend Validation:</strong> Videos will be validated using fluent-ffmpeg to ensure they don't exceed 300 seconds (5 minutes). Invalid files will be rejected and deleted automatically.
+              <strong>Warning</strong> Videos can not exceed 300 seconds (5 minutes). Invalid files will not be uploaded.
             </AlertDescription>
           </Alert>
 
-          {/* Action Buttons */}
           {file && (
             <div className="flex gap-4">
               <Button
                 size="lg"
                 className="flex-1 bg-violet-600 hover:bg-violet-700"
-                onClick={simulateUpload}
+                onClick={handleUpload}
                 disabled={uploading || uploadComplete}
               >
                 {uploading ? "Uploading..." : uploadComplete ? "Uploaded" : "Publish Video"}
@@ -256,11 +312,8 @@ export default function Upload() {
                 size="lg"
                 variant="outline"
                 className="border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
-                onClick={() => {
-                  setFile(null);
-                  setUploadComplete(false);
-                  setUploadProgress(0);
-                }}
+                onClick={handleReset}
+                disabled={uploading}
               >
                 Cancel
               </Button>
@@ -268,7 +321,6 @@ export default function Upload() {
           )}
         </div>
 
-        {/* Guidelines */}
         <Card className="mt-8 p-6 bg-zinc-900 border-zinc-800">
           <h3 className="text-lg font-semibold text-white mb-4">Upload Guidelines</h3>
           <ul className="space-y-2 text-zinc-400">
@@ -280,18 +332,7 @@ export default function Upload() {
               <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
               <span>Supported formats: MP4, MOV, AVI</span>
             </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-              <span>Files are stored securely in MinIO S3-compatible storage</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-              <span>Metadata is validated using Zod before saving to MongoDB</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-              <span>Presigned URLs ensure your content remains private</span>
-            </li>
+
           </ul>
         </Card>
       </div>

@@ -10,6 +10,7 @@ import {
   getFollowers,
   getFollowing,
 } from "../services/followService";
+import { getVideosByOwner } from "../services/videoService";
 import AppError from "../utils/AppError";
 
 export const getMeController = catchAsync(async (req, res, next) => {
@@ -101,6 +102,16 @@ export const getFollowingController = catchAsync(async (req, res) => {
       following: list,
       count: list.length,
     },
+  });
+});
+
+export const getUserVideosController = catchAsync(async (req, res, next) => {
+  const userId = req.params.id?.toString();
+  if (!userId) return next(new AppError("User ID is required", 400));
+  const videos = await getVideosByOwner(userId);
+  res.status(200).json({
+    status: "success",
+    data: { videos, count: videos.length },
   });
 });
 

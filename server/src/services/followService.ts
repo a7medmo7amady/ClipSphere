@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Follower from "../models/Follower";
 import User, { type PublicUser, type UserDocument } from "../models/User";
 import AppError from "../utils/AppError";
+import { createNotification } from "./notificationService";
 
 /** Follow target user. Rejects self-follow (and model pre-save hook also enforces). */
 export async function follow(
@@ -23,6 +24,16 @@ export async function follow(
     { followerId: fid, followingId: tid },
     { upsert: true, new: true }
   );
+
+  const actor = await User.findById(currentUserId).select("username name");
+  const actorName = actor?.name ?? actor?.username ?? "Someone";
+  createNotification({
+    recipientId: targetUserId,
+    actorId: currentUserId,
+    type: "follow",
+    message: `${actorName} started following you.`,
+    link: `/profile/${currentUserId}`,
+  }).catch(() => {});
 
   return { message: "Followed successfully" };
 }
