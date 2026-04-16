@@ -14,6 +14,7 @@ import {
   unlikeVideoController,
   checkLikeStatusController,
   viewVideoController,
+  getFollowingVideosController,
 } from "../controllers/videoController";
 import { similarVideosController } from "../controllers/recommendationController";
 import {
@@ -29,6 +30,7 @@ import {
 const router = express.Router();
 
 router.get("/", getAllPublicVideosController);
+router.get("/feed/following", protect, getFollowingVideosController);
 router.get("/:id/recommendations", similarVideosController);
 router.get("/:id", getVideoController);
 router.post(

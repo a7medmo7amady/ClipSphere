@@ -211,7 +211,7 @@ export default function Upload() {
                 {uploading && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-400">Uploading to MinIO...</span>
+                      <span className="text-zinc-400">Uploading...</span>
                       <span className="text-white font-medium">{uploadProgress}%</span>
                     </div>
                     <Progress value={uploadProgress} className="h-2" />
@@ -291,8 +291,6 @@ export default function Upload() {
               </div>
             </Card>
           )}
-
-          {/* Validation Info */}
           <Alert className="bg-blue-500/10 border-blue-500/50">
             <AlertCircle className="h-4 w-4 text-blue-500" />
             <AlertDescription className="text-blue-500">
@@ -300,7 +298,6 @@ export default function Upload() {
             </AlertDescription>
           </Alert>
 
-          {/* Action Buttons */}
           {file && (
             <div className="flex gap-4">
               <Button
@@ -324,7 +321,6 @@ export default function Upload() {
           )}
         </div>
 
-        {/* Guidelines */}
         <Card className="mt-8 p-6 bg-zinc-900 border-zinc-800">
           <h3 className="text-lg font-semibold text-white mb-4">Upload Guidelines</h3>
           <ul className="space-y-2 text-zinc-400">
@@ -336,18 +332,7 @@ export default function Upload() {
               <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
               <span>Supported formats: MP4, MOV, AVI</span>
             </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-              <span>Files are stored securely in MinIO S3-compatible storage</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-              <span>Metadata is validated using Zod before saving to MongoDB</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-              <span>Presigned URLs ensure your content remains private</span>
-            </li>
+
           </ul>
         </Card>
       </div>

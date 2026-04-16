@@ -12,6 +12,7 @@ import {
   unlikeVideo,
   checkHasLiked,
   incrementVideoView,
+  getFollowingVideos,
 } from "../services/videoService";
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../config/s3";
@@ -77,6 +78,20 @@ export const createVideoController = catchAsync(async (req, res, next) => {
 
 export const getAllPublicVideosController = catchAsync(async (_req, res) => {
   const videos = await getAllPublicVideos();
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      videos,
+      count: videos.length,
+    },
+  });
+});
+
+export const getFollowingVideosController = catchAsync(async (req, res, next) => {
+  if (!req.user) return next(new AppError("Authentication required", 401));
+
+  const videos = await getFollowingVideos(req.user._id.toString());
 
   res.status(200).json({
     status: "success",

@@ -1,5 +1,6 @@
 import Video from "../models/Video";
 import Review from "../models/Review";
+import Follower from "../models/Follower";
 import { Types } from "mongoose";
 import Like from "../models/Like";
 import AppError from "../utils/AppError";
@@ -331,4 +332,20 @@ export async function incrementVideoView(videoId: string) {
   );
   if (!video) throw new AppError("Video not found", 404);
   return video;
+}
+
+export async function getFollowingVideos(userId: string) {
+  const follows = await Follower.find({ followerId: userId }).select("followingId -_id").lean();
+  const followingIds = follows.map(f => f.followingId);
+  
+  if (followingIds.length === 0) {
+    return [];
+  }
+
+  const videos = await Video.find({ owner: { $in: followingIds }, status: "public" })
+    .populate("owner", "username name avatarKey")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return videos;
 }

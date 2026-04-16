@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
+import { useAuth } from "@/contexts/AuthContext";
 
 const API = "http://localhost:5000/api/v1";
 
@@ -28,12 +29,26 @@ export default function Discover() {
   const [activeTab, setActiveTab] = useState("trending");
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  function authHeaders(): Record<string, string> {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
 
   useEffect(() => {
     async function load() {
+      if (activeTab === "following" && !user) {
+        setVideos([]);
+        return;
+      }
+      
       setLoading(true);
       try {
-        const res = await fetch(`${API}/videos`);
+        const endpoint = activeTab === "following" ? `${API}/videos/feed/following` : `${API}/videos`;
+        const options: RequestInit = activeTab === "following" ? { headers: authHeaders() } : {};
+        
+        const res = await fetch(endpoint, options);
         if (!res.ok) return;
         const data = await res.json();
         setVideos(data.data.videos ?? []);
@@ -42,11 +57,11 @@ export default function Discover() {
       }
     }
     load();
-  }, []);
+  }, [activeTab, user]);
 
   const sorted = [...videos].sort((a, b) => {
-    if (activeTab === "trending") return (b.trendingScore ?? 0) - (a.trendingScore ?? 0);
-    return 0; // "following" tab — same list for now
+    if (activeTab === "trending") return (b.score ?? b.trendingScore ?? 0) - (a.score ?? a.trendingScore ?? 0);
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   return (
@@ -69,12 +84,21 @@ export default function Discover() {
       </div>
 
       <div className="px-4 py-6 max-w-7xl mx-auto">
-        {loading ? (
+        {activeTab === "following" && !user ? (
+          <div className="text-center py-20 text-zinc-400">
+            <p className="mb-4">Log in to see videos from users you follow</p>
+            <Link href="/auth">
+              <Button className="bg-violet-600 hover:bg-violet-700 text-white">Log In</Button>
+            </Link>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
           </div>
         ) : sorted.length === 0 ? (
-          <div className="text-center py-20 text-zinc-400">No videos yet. Be the first to upload!</div>
+          <div className="text-center py-20 text-zinc-400">
+            {activeTab === "following" ? "You aren't following anyone with videos yet!" : "No videos yet. Be the first to upload!"}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {sorted.map((video: any) => {
