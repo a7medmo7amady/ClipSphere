@@ -6,6 +6,20 @@ import Video from "../models/Video";
 import WatchHistory from "../models/WatchHistory";
 import AppError from "../utils/AppError";
 import { generateVideoEmbedding } from "./embeddingService";
+import { createDownloadUrl } from "../utils/presign";
+
+async function attachPresignedUrls(videos: any[]) {
+  return Promise.all(
+    videos.map(async (v) => {
+      if (!v.videoURL) return v;
+      try {
+        return { ...v, videoURL: await createDownloadUrl(v.videoURL) };
+      } catch {
+        return v;
+      }
+    })
+  );
+}
 
 type RecommendByVectorOptions = {
   limit?: number;
@@ -151,6 +165,16 @@ async function trendingVideos(limit: number) {
     { $sort: { score: -1, createdAt: -1 } },
     { $limit: safeLimit },
     {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        pipeline: [{ $project: { username: 1, name: 1, avatarKey: 1 } }],
+        as: "ownerData",
+      },
+    },
+    { $set: { owner: { $first: "$ownerData" } } },
+    {
       $project: {
         title: 1,
         description: 1,
@@ -171,7 +195,7 @@ async function trendingVideos(limit: number) {
     },
   ]);
 
-  return results;
+  return attachPresignedUrls(results);
 }
 
 export async function recommendTrendingVideos(limit = 12) {
@@ -222,6 +246,16 @@ export async function recommendVideosByVector(
       },
     },
     {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        pipeline: [{ $project: { username: 1, name: 1, avatarKey: 1 } }],
+        as: "ownerData",
+      },
+    },
+    { $set: { owner: { $first: "$ownerData" } } },
+    {
       $project: {
         title: 1,
         description: 1,
@@ -243,7 +277,7 @@ export async function recommendVideosByVector(
     },
   ]);
 
-  return results;
+  return attachPresignedUrls(results);
 }
 
 export async function recommendVideosFromTextQuery(

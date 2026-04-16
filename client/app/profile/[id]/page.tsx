@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
-import { Settings, MapPin, Calendar, Link as LinkIcon, Play, Heart, Eye, Grid, List, UserCircle } from "lucide-react";
+import { useState, use, useEffect, useRef } from "react";
+import { Settings, MapPin, Calendar, Link as LinkIcon, Play, Heart, Eye, Grid, List, UserCircle, LogOut, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const API = "http://localhost:5000/api/v1";
 
@@ -40,6 +49,7 @@ function formatCount(n: number) {
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { logout } = useAuth();
   const myId = getMyId();
   const isOwn = id === "1" || myId === id;
   const targetId = id === "1" && myId ? myId : id;
@@ -51,6 +61,23 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteVideo = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const token = getToken();
+    const res = await fetch(`${API}/videos/${deleteTarget.id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    setDeleting(false);
+    if (res.ok) {
+      setVideos((prev) => prev.filter((v) => v._id !== deleteTarget.id));
+      setDeleteTarget(null);
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -145,12 +172,18 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
               </div>
               <div className="flex gap-3">
                 {isOwn ? (
-                  <Link href="/settings">
-                    <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
-                      <Settings className="w-5 h-5 mr-2" />
-                      Edit Profile
+                  <>
+                    <Link href="/settings">
+                      <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
+                        <Settings className="w-5 h-5 mr-2" />
+                        Edit Profile
+                      </Button>
+                    </Link>
+                    <Button size="lg" variant="destructive" onClick={logout} className="gap-2">
+                       <LogOut className="w-5 h-5" />
+                       Logout
                     </Button>
-                  </Link>
+                  </>
                 ) : (
                   myId && (
                     <Button
@@ -234,22 +267,34 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {videos.map((video: any) => (
-                  <Link key={video._id} href={`/video/${video._id}`}>
-                    <Card className="group overflow-hidden bg-zinc-900 border-zinc-800 hover:border-violet-500/50 transition-all">
-                      <div className="relative aspect-video bg-zinc-800 flex items-center justify-center">
-                        <Play className="w-10 h-10 text-zinc-600 group-hover:text-violet-500 transition-colors" />
-                        <Badge className="absolute top-2 right-2 bg-zinc-950/90 text-white border-0">
-                          {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}
-                        </Badge>
-                        <div className="absolute bottom-2 left-2 right-2 flex items-center gap-3 text-white text-xs">
-                          <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
+                  <div key={video._id} className="relative group">
+                    <Link href={`/video/${video._id}`}>
+                      <Card className="overflow-hidden bg-zinc-900 border-zinc-800 hover:border-violet-500/50 transition-all">
+                        <div className="relative aspect-video bg-zinc-800 flex items-center justify-center overflow-hidden">
+                          {video.videoURL ? <VideoThumbnail videoUrl={video.videoURL} className="absolute inset-0 z-0 opacity-70 group-hover:opacity-100 transition-opacity" /> : null}
+                          <Play className="relative z-10 w-10 h-10 text-white drop-shadow-lg group-hover:text-violet-500 transition-colors" />
+                          <Badge className="absolute z-10 top-2 right-2 bg-zinc-950/90 text-white border-0">
+                            {video.duration ? `${Math.floor(video.duration / 60)}:${String(video.duration % 60).padStart(2, "0")}` : "0:00"}
+                          </Badge>
+                          <div className="absolute z-10 bottom-2 left-2 right-2 flex items-center gap-3 text-white text-xs drop-shadow-md">
+                            <span className="flex items-center gap-1 font-semibold"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-semibold text-white text-sm line-clamp-2">{video.title}</h3>
-                      </div>
-                    </Card>
-                  </Link>
+                        <div className="p-3">
+                          <h3 className="font-semibold text-white text-sm line-clamp-2">{video.title}</h3>
+                        </div>
+                      </Card>
+                    </Link>
+                    {isOwn && (
+                      <button
+                        onClick={() => setDeleteTarget({ id: video._id, title: video.title })}
+                        className="absolute top-2 left-2 z-20 w-8 h-8 rounded-full bg-red-600/80 hover:bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Delete video"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             ) : (
@@ -304,6 +349,23 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Video</DialogTitle>
+          </DialogHeader>
+          <p className="text-zinc-400 text-sm">Are you sure you want to delete <span className="text-white font-medium">"{deleteTarget?.title}"</span>? This cannot be undone.</p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteVideo} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

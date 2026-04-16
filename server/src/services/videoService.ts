@@ -1,6 +1,11 @@
 import Video from "../models/Video";
 import Review from "../models/Review";
+import Follower from "../models/Follower";
+import { Types } from "mongoose";
+import Like from "../models/Like";
 import AppError from "../utils/AppError";
+import User from "../models/User";
+import { createNotification } from "./notificationService";
 import config from "../config/env";
 import {
   ACTIVE_VIDEO_EMBEDDING_MODEL,
@@ -232,6 +237,28 @@ export async function createReview(videoId: string, userId: string, payload: Cre
       video: videoId,
     });
 
+    const actor = await User.findById(userId).select("username name");
+    const actorName = actor?.name ?? actor?.username ?? "Someone";
+    createNotification({
+      recipientId: video.owner.toString(),
+      actorId: userId,
+      type: "review",
+      message: `${actorName} reviewed your video "${video.title}".`,
+      link: `/video/${videoId}`,
+    }).catch(() => {});
+
+    const stats = await Review.aggregate([
+      { $match: { video: new Types.ObjectId(videoId) } },
+      { $group: { _id: "$video", avgRating: { $avg: "$rating" }, numReviews: { $sum: 1 } } }
+    ]);
+    
+    if (stats.length > 0) {
+      await Video.findByIdAndUpdate(videoId, {
+        avgRating: Math.round(stats[0].avgRating * 10) / 10,
+        reviewsCount: stats[0].numReviews
+      });
+    }
+
     return review;
   } catch (error: any) {
     if (error?.code === 11000) {
@@ -248,4 +275,81 @@ export async function getReviewsByVideo(videoId: string) {
     .populate("user", "username name avatarKey");
 
   return reviews;
+}
+
+export async function likeVideo(videoId: string, userId: string) {
+  const video = await Video.findById(videoId);
+  if (!video) throw new AppError("Video not found", 404);
+
+  try {
+    await Like.create({ user: userId, video: videoId });
+    await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: 1 } });
+    
+    try {
+      if (video.owner.toString() !== userId) {
+        await createNotification({
+          recipientId: video.owner.toString(),
+          actorId: userId,
+          type: "like",
+          message: "liked your video",
+          link: `/video/${video._id}`
+        });
+      }
+    } catch (err) {
+      console.error("Failed to create like notification", err);
+    }
+    
+    return true;
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      throw new AppError("You have already liked this video", 409);
+    }
+    throw error;
+  }
+}
+
+export async function unlikeVideo(videoId: string, userId: string) {
+  const video = await Video.findById(videoId);
+  if (!video) throw new AppError("Video not found", 404);
+
+  const result = await Like.deleteOne({ user: userId, video: videoId });
+  if (result.deletedCount && result.deletedCount > 0) {
+    await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: -1 } });
+  }
+  return true;
+}
+
+export async function checkHasLiked(videoId: string, userId: string) {
+  const like = await Like.findOne({ user: userId, video: videoId });
+  return !!like;
+}
+
+export async function incrementVideoView(videoId: string) {
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    { $inc: { viewsCount: 1 } },
+    { new: true }
+  );
+  if (!video) throw new AppError("Video not found", 404);
+  return video;
+}
+
+export async function getFollowingVideos(userId: string) {
+  const follows = await Follower.find({ followerId: userId }).select("followingId -_id").lean();
+  const followingIds = follows.map(f => f.followingId);
+  
+  if (followingIds.length === 0) {
+    return [];
+  }
+
+  const videos = await Video.find({ owner: { $in: followingIds }, status: "public" })
+    .populate("owner", "username name avatarKey")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return Promise.all(
+    videos.map(async (v) => {
+      try { return { ...v, videoURL: await createDownloadUrl(v.videoURL) }; } catch { return v; }
+    })
+  );
 }

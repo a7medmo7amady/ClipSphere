@@ -15,7 +15,7 @@ export default function OAuthCallback() {
       localStorage.setItem("token", token);
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        router.push(`/profile/${payload.id}`);
+        router.push("/profile/1");
       } catch {
         router.push("/");
       }

@@ -8,6 +8,11 @@ import {
   deleteVideo,
   createReview,
   getReviewsByVideo,
+  likeVideo,
+  unlikeVideo,
+  checkHasLiked,
+  incrementVideoView,
+  getFollowingVideos,
 } from "../services/videoService";
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../config/s3";
@@ -83,6 +88,20 @@ export const getAllPublicVideosController = catchAsync(async (_req, res) => {
   });
 });
 
+export const getFollowingVideosController = catchAsync(async (req, res, next) => {
+  if (!req.user) return next(new AppError("Authentication required", 401));
+
+  const videos = await getFollowingVideos(req.user._id.toString());
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      videos,
+      count: videos.length,
+    },
+  });
+});
+
 export const getVideoController = catchAsync(async (req, res, next) => {
   const videoId = req.params.id?.toString();
   if (!videoId) return next(new AppError("Video ID is required", 400));
@@ -143,4 +162,40 @@ export const getReviewsController = catchAsync(async (req, res, next) => {
     status: "success",
     data: { reviews },
   });
+});
+
+export const likeVideoController = catchAsync(async (req, res, next) => {
+  const videoId = req.params.id?.toString();
+  if (!videoId) return next(new AppError("Video ID is required", 400));
+  
+  await likeVideo(videoId, req.user!.id);
+  
+  res.status(200).json({ status: "success", message: "Video liked successfully" });
+});
+
+export const unlikeVideoController = catchAsync(async (req, res, next) => {
+  const videoId = req.params.id?.toString();
+  if (!videoId) return next(new AppError("Video ID is required", 400));
+  
+  await unlikeVideo(videoId, req.user!.id);
+  
+  res.status(200).json({ status: "success", message: "Video unliked successfully" });
+});
+
+export const checkLikeStatusController = catchAsync(async (req, res, next) => {
+  const videoId = req.params.id?.toString();
+  if (!videoId) return next(new AppError("Video ID is required", 400));
+  
+  const hasLiked = await checkHasLiked(videoId, req.user!.id);
+  
+  res.status(200).json({ status: "success", data: { hasLiked } });
+});
+
+export const viewVideoController = catchAsync(async (req, res, next) => {
+  const videoId = req.params.id?.toString();
+  if (!videoId) return next(new AppError("Video ID is required", 400));
+  
+  await incrementVideoView(videoId);
+  
+  res.status(200).json({ status: "success", message: "View recorded successfully" });
 });
