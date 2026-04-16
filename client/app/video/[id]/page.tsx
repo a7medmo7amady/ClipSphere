@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
+import { useState, use, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Heart, Share2, Flag, DollarSign, MessageCircle, Send, Star, MoreVertical, Edit, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,13 +17,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const API = "http://localhost:5000/api/v1";
 
 export default function VideoPlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
-  
+  const router = useRouter();
+
   const [liked, setLiked] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -39,6 +48,8 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   const [reviewError, setReviewError] = useState("");
   
   const [shareText, setShareText] = useState("Share");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   function authHeaders(): Record<string, string> {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -201,6 +212,20 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const res = await fetch(`${API}/videos/${id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    setDeleting(false);
+    if (res.ok) router.push("/discover");
+  };
+
+  const ownerId = video?.owner?._id || video?.owner?.id;
+  const canDelete = user && (user.id === ownerId || user.role === "admin");
+
   const relatedVideos = [
     { id: "2", title: "Mountain Sunrise", thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=600&fit=crop", views: "98K", duration: "3:45" },
     { id: "3", title: "City Lights", thumbnail: "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=400&h=600&fit=crop", views: "156K", duration: "4:20" },
@@ -256,23 +281,21 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
                     </div>
                   </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="icon" variant="ghost" className="text-zinc-400 hover:text-white">
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-zinc-800 border-zinc-700">
-                    <DropdownMenuItem className="text-white hover:bg-zinc-700">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Video
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-500 hover:bg-zinc-700">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Video
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {canDelete && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="text-zinc-400 hover:text-white">
+                        <MoreVertical className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-zinc-800 border-zinc-700">
+                      <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-500 hover:bg-zinc-700 cursor-pointer">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Video
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -434,6 +457,23 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Video</DialogTitle>
+          </DialogHeader>
+          <p className="text-zinc-400 text-sm">Are you sure you want to delete <span className="text-white font-medium">"{video?.title}"</span>? This cannot be undone.</p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
