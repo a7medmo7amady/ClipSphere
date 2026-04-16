@@ -42,12 +42,22 @@ export default function Discover() {
         setVideos([]);
         return;
       }
-      
+
       setLoading(true);
       try {
-        const endpoint = activeTab === "following" ? `${API}/videos/feed/following` : `${API}/videos`;
-        const options: RequestInit = activeTab === "following" ? { headers: authHeaders() } : {};
-        
+        let endpoint: string;
+        let options: RequestInit = {};
+
+        if (activeTab === "following") {
+          endpoint = `${API}/videos/feed/following`;
+          options = { headers: authHeaders() };
+        } else if (user) {
+          endpoint = `${API}/recommendations/feed`;
+          options = { headers: authHeaders() };
+        } else {
+          endpoint = `${API}/recommendations/trending`;
+        }
+
         const res = await fetch(endpoint, options);
         if (!res.ok) return;
         const data = await res.json();

@@ -347,5 +347,9 @@ export async function getFollowingVideos(userId: string) {
     .sort({ createdAt: -1 })
     .lean();
 
-  return videos;
+  return Promise.all(
+    videos.map(async (v) => {
+      try { return { ...v, videoURL: await createDownloadUrl(v.videoURL) }; } catch { return v; }
+    })
+  );
 }
