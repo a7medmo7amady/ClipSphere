@@ -1,6 +1,8 @@
 import Video from "../models/Video";
 import Review from "../models/Review";
 import AppError from "../utils/AppError";
+import User from "../models/User";
+import { createNotification } from "./notificationService";
 import config from "../config/env";
 import {
   ACTIVE_VIDEO_EMBEDDING_MODEL,
@@ -231,6 +233,16 @@ export async function createReview(videoId: string, userId: string, payload: Cre
       user: userId,
       video: videoId,
     });
+
+    const actor = await User.findById(userId).select("username name");
+    const actorName = actor?.name ?? actor?.username ?? "Someone";
+    createNotification({
+      recipientId: video.owner.toString(),
+      actorId: userId,
+      type: "review",
+      message: `${actorName} reviewed your video "${video.title}".`,
+      link: `/video/${videoId}`,
+    }).catch(() => {});
 
     return review;
   } catch (error: any) {

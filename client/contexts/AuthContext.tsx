@@ -8,7 +8,7 @@ export interface User {
   name?: string;
   username: string;
   email: string;
-  avatar?: string;
+  avatarKey?: string;
   role: string;
 }
 
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (res.ok) {
           const data = await res.json();
-          setUser(data.data.doc || data.data.user || data.data); // Adjust according to exact backend standard
+          setUser(data.data.user);
         } else {
           localStorage.removeItem("token");
         }
