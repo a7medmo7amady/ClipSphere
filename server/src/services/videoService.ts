@@ -1,5 +1,6 @@
 import Video from "../models/Video";
 import Review from "../models/Review";
+import { Types } from "mongoose";
 import Like from "../models/Like";
 import AppError from "../utils/AppError";
 import User from "../models/User";
@@ -244,6 +245,18 @@ export async function createReview(videoId: string, userId: string, payload: Cre
       message: `${actorName} reviewed your video "${video.title}".`,
       link: `/video/${videoId}`,
     }).catch(() => {});
+
+    const stats = await Review.aggregate([
+      { $match: { video: new Types.ObjectId(videoId) } },
+      { $group: { _id: "$video", avgRating: { $avg: "$rating" }, numReviews: { $sum: 1 } } }
+    ]);
+    
+    if (stats.length > 0) {
+      await Video.findByIdAndUpdate(videoId, {
+        avgRating: Math.round(stats[0].avgRating * 10) / 10,
+        reviewsCount: stats[0].numReviews
+      });
+    }
 
     return review;
   } catch (error: any) {

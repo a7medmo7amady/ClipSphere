@@ -184,10 +184,16 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
       setComment("");
       setRating(0);
       
-      setVideo((prev: any) => ({
-        ...prev,
-        reviewsCount: (prev.reviewsCount || 0) + 1
-      }));
+      setVideo((prev: any) => {
+        const currentTotal = (prev.avgRating || 0) * (prev.reviewsCount || 0);
+        const newTotal = currentTotal + rating;
+        const newCount = (prev.reviewsCount || 0) + 1;
+        return {
+          ...prev,
+          avgRating: Number((newTotal / newCount).toFixed(1)),
+          reviewsCount: newCount
+        };
+      });
     } catch (err: any) {
       setReviewError(err.message);
     } finally {
