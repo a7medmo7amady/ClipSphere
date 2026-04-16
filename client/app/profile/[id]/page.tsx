@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, use, useEffect } from "react";
-import { Settings, MapPin, Calendar, Link as LinkIcon, Play, Heart, Eye, Grid, List, UserCircle } from "lucide-react";
+import { Settings, MapPin, Calendar, Link as LinkIcon, Play, Heart, Eye, Grid, List, UserCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 const API = "http://localhost:5000/api/v1";
 
@@ -40,6 +41,7 @@ function formatCount(n: number) {
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { logout } = useAuth();
   const myId = getMyId();
   const isOwn = id === "1" || myId === id;
   const targetId = id === "1" && myId ? myId : id;
@@ -145,12 +147,18 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
               </div>
               <div className="flex gap-3">
                 {isOwn ? (
-                  <Link href="/settings">
-                    <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
-                      <Settings className="w-5 h-5 mr-2" />
-                      Edit Profile
+                  <>
+                    <Link href="/settings">
+                      <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
+                        <Settings className="w-5 h-5 mr-2" />
+                        Edit Profile
+                      </Button>
+                    </Link>
+                    <Button size="lg" variant="destructive" onClick={logout} className="gap-2">
+                       <LogOut className="w-5 h-5" />
+                       Logout
                     </Button>
-                  </Link>
+                  </>
                 ) : (
                   myId && (
                     <Button
