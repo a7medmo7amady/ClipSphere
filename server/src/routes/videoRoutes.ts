@@ -13,6 +13,7 @@ import {
   likeVideoController,
   unlikeVideoController,
   checkLikeStatusController,
+  viewVideoController,
 } from "../controllers/videoController";
 import { similarVideosController } from "../controllers/recommendationController";
 import {
@@ -56,5 +57,7 @@ router.get("/:id/reviews", getReviewsController);
 router.post("/:id/like", protect, likeVideoController);
 router.delete("/:id/like", protect, unlikeVideoController);
 router.get("/:id/like/status", protect, checkLikeStatusController);
+
+router.post("/:id/view", viewVideoController);
 
 export default router;

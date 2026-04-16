@@ -59,6 +59,18 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
         const videoData = await videoRes.json();
         setVideo(videoData.data.video);
         
+        const viewKey = `viewTriggered_${id}`;
+        if (!sessionStorage.getItem(viewKey)) {
+          fetch(`${API}/videos/${id}/view`, { method: "POST" })
+            .then(res => {
+              if (res.ok) {
+                sessionStorage.setItem(viewKey, "true");
+                setVideo((prev: any) => ({ ...prev, viewsCount: (prev.viewsCount || 0) + 1 }));
+              }
+            })
+            .catch(err => console.error("Failed to register view", err));
+        }
+        
         if (reviewsRes.ok) {
           const reviewsData = await reviewsRes.json();
           setReviews(reviewsData.data.reviews || []);

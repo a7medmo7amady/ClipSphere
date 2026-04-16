@@ -11,6 +11,7 @@ import {
   likeVideo,
   unlikeVideo,
   checkHasLiked,
+  incrementVideoView,
 } from "../services/videoService";
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../config/s3";
@@ -173,4 +174,13 @@ export const checkLikeStatusController = catchAsync(async (req, res, next) => {
   const hasLiked = await checkHasLiked(videoId, req.user!.id);
   
   res.status(200).json({ status: "success", data: { hasLiked } });
+});
+
+export const viewVideoController = catchAsync(async (req, res, next) => {
+  const videoId = req.params.id?.toString();
+  if (!videoId) return next(new AppError("Video ID is required", 400));
+  
+  await incrementVideoView(videoId);
+  
+  res.status(200).json({ status: "success", message: "View recorded successfully" });
 });

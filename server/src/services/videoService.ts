@@ -270,6 +270,21 @@ export async function likeVideo(videoId: string, userId: string) {
   try {
     await Like.create({ user: userId, video: videoId });
     await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: 1 } });
+    
+    try {
+      if (video.owner.toString() !== userId) {
+        await createNotification({
+          recipientId: video.owner.toString(),
+          actorId: userId,
+          type: "like",
+          message: "liked your video",
+          link: `/video/${video._id}`
+        });
+      }
+    } catch (err) {
+      console.error("Failed to create like notification", err);
+    }
+    
     return true;
   } catch (error: any) {
     if (error?.code === 11000) {
@@ -293,4 +308,14 @@ export async function unlikeVideo(videoId: string, userId: string) {
 export async function checkHasLiked(videoId: string, userId: string) {
   const like = await Like.findOne({ user: userId, video: videoId });
   return !!like;
+}
+
+export async function incrementVideoView(videoId: string) {
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    { $inc: { viewsCount: 1 } },
+    { new: true }
+  );
+  if (!video) throw new AppError("Video not found", 404);
+  return video;
 }
