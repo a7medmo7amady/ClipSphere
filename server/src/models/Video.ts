@@ -23,6 +23,7 @@ export interface IVideo {
   duration: number;
   viewsCount: number;
   reviewsCount: number;
+  likesCount: number;
   avgRating: number;
   trendingScore: number;
   status: "public" | "private" | "flagged";
@@ -110,6 +111,11 @@ const videoSchema = new Schema<IVideo>(
       max: 300,
     },
     viewsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    likesCount: {
       type: Number,
       default: 0,
       min: 0,

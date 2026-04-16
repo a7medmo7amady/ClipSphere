@@ -10,6 +10,9 @@ import {
   deleteVideoController,
   createReviewController,
   getReviewsController,
+  likeVideoController,
+  unlikeVideoController,
+  checkLikeStatusController,
 } from "../controllers/videoController";
 import { similarVideosController } from "../controllers/recommendationController";
 import {
@@ -49,5 +52,9 @@ router.post(
   createReviewController
 );
 router.get("/:id/reviews", getReviewsController);
+
+router.post("/:id/like", protect, likeVideoController);
+router.delete("/:id/like", protect, unlikeVideoController);
+router.get("/:id/like/status", protect, checkLikeStatusController);
 
 export default router;

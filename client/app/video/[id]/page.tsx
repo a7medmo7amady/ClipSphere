@@ -66,11 +66,19 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
 
         const ownerId = videoData.data.video.owner?._id || videoData.data.video.owner?.id;
         if (ownerId && user) {
-          const followRes = await fetch(`${API}/users/${ownerId}/followers`);
+          const [followRes, likeRes] = await Promise.all([
+            fetch(`${API}/users/${ownerId}/followers`),
+            fetch(`${API}/videos/${id}/like/status`, { headers: authHeaders() })
+          ]);
+          
           if (followRes.ok) {
             const followData = await followRes.json();
             const follows = followData.data.followers.some((f: any) => f._id === user.id || f.id === user.id);
             setIsFollowing(follows);
+          }
+          if (likeRes.ok) {
+            const likeData = await likeRes.json();
+            setLiked(likeData.data.hasLiked);
           }
         }
       } catch (err: any) {
@@ -89,6 +97,31 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
       setTimeout(() => setShareText("Share"), 2000);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) return alert("Please log in to like this video");
+
+    // Optimistically update
+    setLiked(!liked);
+    setVideo((prev: any) => ({
+      ...prev,
+      likesCount: (prev.likesCount || 0) + (liked ? -1 : 1)
+    }));
+
+    try {
+      const method = liked ? "DELETE" : "POST";
+      const res = await fetch(`${API}/videos/${id}/like`, { method, headers: authHeaders() });
+      if (!res.ok) throw new Error("Failed to process like");
+    } catch (err) {
+      console.error(err);
+      // Revert if API call fails
+      setLiked(liked);
+      setVideo((prev: any) => ({
+        ...prev,
+        likesCount: (prev.likesCount || 0) + (liked ? 1 : -1)
+      }));
     }
   };
 
@@ -229,10 +262,10 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
                 <Button
                   variant={liked ? "default" : "outline"}
                   className={liked ? "bg-red-600 hover:bg-red-700" : "border-zinc-700 text-zinc-400 hover:text-white"}
-                  onClick={() => setLiked(!liked)}
+                  onClick={handleLike}
                 >
                   <Heart className={`w-5 h-5 mr-2 ${liked ? "fill-current" : ""}`} />
-                  {liked ? "Liked" : "Like"}
+                  {liked ? "Liked" : "Like"} ({video.likesCount?.toLocaleString() || 0})
                 </Button>
                 <Button variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white" onClick={handleShare}>
                   {shareText === "Copied!" ? <Check className="w-5 h-5 mr-2 text-green-400" /> : <Share2 className="w-5 h-5 mr-2" />}

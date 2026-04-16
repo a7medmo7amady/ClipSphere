@@ -1,5 +1,6 @@
 import Video from "../models/Video";
 import Review from "../models/Review";
+import Like from "../models/Like";
 import AppError from "../utils/AppError";
 import User from "../models/User";
 import { createNotification } from "./notificationService";
@@ -260,4 +261,36 @@ export async function getReviewsByVideo(videoId: string) {
     .populate("user", "username name avatarKey");
 
   return reviews;
+}
+
+export async function likeVideo(videoId: string, userId: string) {
+  const video = await Video.findById(videoId);
+  if (!video) throw new AppError("Video not found", 404);
+
+  try {
+    await Like.create({ user: userId, video: videoId });
+    await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: 1 } });
+    return true;
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      throw new AppError("You have already liked this video", 409);
+    }
+    throw error;
+  }
+}
+
+export async function unlikeVideo(videoId: string, userId: string) {
+  const video = await Video.findById(videoId);
+  if (!video) throw new AppError("Video not found", 404);
+
+  const result = await Like.deleteOne({ user: userId, video: videoId });
+  if (result.deletedCount && result.deletedCount > 0) {
+    await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: -1 } });
+  }
+  return true;
+}
+
+export async function checkHasLiked(videoId: string, userId: string) {
+  const like = await Like.findOne({ user: userId, video: videoId });
+  return !!like;
 }
