@@ -25,7 +25,7 @@ function formatDuration(seconds: number) {
 }
 
 export default function Discover() {
-  const [activeTab, setActiveTab] = useState("recent");
+  const [activeTab, setActiveTab] = useState("trending");
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +46,6 @@ export default function Discover() {
 
   const sorted = [...videos].sort((a, b) => {
     if (activeTab === "trending") return (b.trendingScore ?? 0) - (a.trendingScore ?? 0);
-    if (activeTab === "recent") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     return 0; // "following" tab — same list for now
   });
 
@@ -60,9 +59,6 @@ export default function Discover() {
             <TabsList className="w-full md:w-auto bg-zinc-900 border border-zinc-800">
               <TabsTrigger value="trending" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />Trending
-              </TabsTrigger>
-              <TabsTrigger value="recent" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />Recent
               </TabsTrigger>
               <TabsTrigger value="following" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />Following
