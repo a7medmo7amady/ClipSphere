@@ -7,6 +7,9 @@ PASSED=0
 SKIPPED=0
 LAST_STATUS=""
 LAST_BODY_FILE=""
+TMP_DIR=""
+SHORT_VIDEO_FILE=""
+LONG_VIDEO_FILE=""
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -61,6 +64,10 @@ BASE_URL="${API_BASE_URL:-http://localhost:${PORT}/api/v1}"
 cleanup() {
 	if [[ -n "${LAST_BODY_FILE}" && -f "${LAST_BODY_FILE}" ]]; then
 		rm -f "${LAST_BODY_FILE}"
+	fi
+
+	if [[ -n "${TMP_DIR}" && -d "${TMP_DIR}" ]]; then
+		rm -rf "${TMP_DIR}"
 	fi
 }
 
@@ -139,6 +146,86 @@ api_call() {
 	fi
 
 	LAST_STATUS="$(curl "${curl_args[@]}")"
+}
+
+api_call_multipart_video() {
+	local endpoint="$1"
+	local video_path="$2"
+	local title="$3"
+	local description="$4"
+	local status_value="$5"
+	local token="$6"
+	local upload_video_path="$video_path"
+
+	if command -v cygpath >/dev/null 2>&1; then
+		upload_video_path="$(cygpath -am "$video_path")"
+	fi
+
+	if [[ -n "${LAST_BODY_FILE}" && -f "${LAST_BODY_FILE}" ]]; then
+		rm -f "${LAST_BODY_FILE}"
+	fi
+
+	LAST_BODY_FILE="$(mktemp)"
+
+	local -a curl_args
+	curl_args=(
+		-sS
+		-o "$LAST_BODY_FILE"
+		-w "%{http_code}"
+		-X "POST"
+		"${BASE_URL}${endpoint}"
+		-H "Authorization: Bearer ${token}"
+		-F "video=@${upload_video_path};type=video/mp4"
+		-F "title=${title}"
+		-F "description=${description}"
+		-F "status=${status_value}"
+	)
+
+	LAST_STATUS="$(curl "${curl_args[@]}")"
+}
+
+create_fixture_video() {
+	local output_path="$1"
+	local duration_seconds="$2"
+	local size="$3"
+	local fps="$4"
+
+	ffmpeg \
+		-hide_banner \
+		-loglevel error \
+		-y \
+		-f lavfi \
+		-i "color=c=black:s=${size}:r=${fps}" \
+		-t "${duration_seconds}" \
+		-an \
+		-c:v libx264 \
+		-preset ultrafast \
+		-pix_fmt yuv420p \
+		"${output_path}" >/dev/null 2>&1
+}
+
+prepare_video_fixtures() {
+	if ! command -v ffmpeg >/dev/null 2>&1; then
+		echo -e "${RED}Fatal:${NC} ffmpeg is required for video upload seed tests"
+		echo "Install ffmpeg and ensure it is available on PATH."
+		exit 1
+	fi
+
+	TMP_DIR="$(mktemp -d)"
+	SHORT_VIDEO_FILE="${TMP_DIR}/seed-short.mp4"
+	LONG_VIDEO_FILE="${TMP_DIR}/seed-long-301s.mp4"
+
+	create_fixture_video "$SHORT_VIDEO_FILE" "8" "160x90" "24"
+	if [[ ! -s "$SHORT_VIDEO_FILE" ]]; then
+		echo -e "${RED}Fatal:${NC} failed to generate short test video"
+		exit 1
+	fi
+
+	create_fixture_video "$LONG_VIDEO_FILE" "301" "16x16" "1"
+	if [[ ! -s "$LONG_VIDEO_FILE" ]]; then
+		echo -e "${RED}Fatal:${NC} failed to generate long test video"
+		exit 1
+	fi
 }
 
 assert_status() {
@@ -258,6 +345,70 @@ skip_check() {
 	local label="$1"
 	SKIPPED=$((SKIPPED + 1))
 	echo -e "${YELLOW}-${NC} ${label} (skipped)"
+}
+
+ensure_s3_bucket_ready() {
+	if [[ -z "${S3_BUCKET:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} S3_BUCKET is required for video upload tests"
+		echo "Set S3_BUCKET in environment or in server/.env"
+		exit 1
+	fi
+
+	if [[ -z "${S3_REGION:-}" || -z "${S3_ENDPOINT:-}" || -z "${S3_ACCESS_KEY:-}" || -z "${S3_SECRET_KEY:-}" ]]; then
+		echo -e "${RED}Fatal:${NC} S3 settings are required for video upload tests"
+		echo "Missing one of: S3_REGION, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY"
+		exit 1
+	fi
+
+	(
+		cd "$SERVER_DIR" || exit 1
+		S3_BUCKET="$S3_BUCKET" \
+		S3_REGION="$S3_REGION" \
+		S3_ENDPOINT="$S3_ENDPOINT" \
+		S3_ACCESS_KEY="$S3_ACCESS_KEY" \
+		S3_SECRET_KEY="$S3_SECRET_KEY" \
+		node -e '
+			const { S3Client, HeadBucketCommand, CreateBucketCommand } = require("@aws-sdk/client-s3");
+
+			async function run() {
+				const bucket = process.env.S3_BUCKET;
+				const client = new S3Client({
+					region: process.env.S3_REGION,
+					endpoint: process.env.S3_ENDPOINT,
+					credentials: {
+						accessKeyId: process.env.S3_ACCESS_KEY,
+						secretAccessKey: process.env.S3_SECRET_KEY,
+					},
+					forcePathStyle: true,
+				});
+
+				try {
+					await client.send(new HeadBucketCommand({ Bucket: bucket }));
+					process.exit(0);
+				} catch (error) {
+					const status = error?.$metadata?.httpStatusCode;
+					const name = error?.name || "";
+
+					if (status !== 404 && name !== "NotFound" && name !== "NoSuchBucket") {
+						throw error;
+					}
+
+					await client.send(new CreateBucketCommand({ Bucket: bucket }));
+					await client.send(new HeadBucketCommand({ Bucket: bucket }));
+				}
+			}
+
+			run().catch(() => process.exit(1));
+		'
+	)
+
+	local ensure_exit=$?
+	if [[ "$ensure_exit" -ne 0 ]]; then
+		echo -e "${RED}Fatal:${NC} unable to verify/create S3 bucket '${S3_BUCKET}'"
+		exit 1
+	fi
+
+	echo -e "${GREEN}✓${NC} Storage bucket '${S3_BUCKET}' is ready"
 }
 
 promote_user_to_admin() {
@@ -525,10 +676,14 @@ assert_status "404" "Reject unfollow when relation does not exist"
 
 print_header "Videos: create/feed/ownership checks"
 
-api_call "POST" "/videos" "{\"title\":\"Too Long Video\",\"description\":\"Should fail\",\"videoURL\":\"minio/too-long.mp4\",\"duration\":301}" "$ALICE_TOKEN"
+ensure_s3_bucket_ready
+
+prepare_video_fixtures
+
+api_call_multipart_video "/videos" "$LONG_VIDEO_FILE" "Too Long Video" "Should fail" "public" "$ALICE_TOKEN"
 assert_status "400" "Reject video duration > 300"
 
-api_call "POST" "/videos" "{\"title\":\"Alice Public Video\",\"description\":\"Public test video\",\"videoURL\":\"minio/${suffix}-public.mp4\",\"duration\":120,\"status\":\"public\"}" "$ALICE_TOKEN"
+api_call_multipart_video "/videos" "$SHORT_VIDEO_FILE" "Alice Public Video" "Public test video" "public" "$ALICE_TOKEN"
 assert_status "201" "Create public video"
 PUBLIC_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
 require_value "$PUBLIC_VIDEO_ID" "public video id"
@@ -542,12 +697,12 @@ else
 	skip_check "Embedding assertions disabled (set EXPECT_EMBEDDINGS=true with working Vertex config)"
 fi
 
-api_call "POST" "/videos" "{\"title\":\"Alice Private Video\",\"description\":\"Private test video\",\"videoURL\":\"minio/${suffix}-private.mp4\",\"duration\":60,\"status\":\"private\"}" "$ALICE_TOKEN"
+api_call_multipart_video "/videos" "$SHORT_VIDEO_FILE" "Alice Private Video" "Private test video" "private" "$ALICE_TOKEN"
 assert_status "201" "Create private video"
 PRIVATE_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
 require_value "$PRIVATE_VIDEO_ID" "private video id"
 
-api_call "POST" "/videos" "{\"title\":\"Bob Video\",\"description\":\"Video for admin delete test\",\"videoURL\":\"minio/${suffix}-bob.mp4\",\"duration\":45,\"status\":\"public\"}" "$BOB_TOKEN"
+api_call_multipart_video "/videos" "$SHORT_VIDEO_FILE" "Bob Video" "Video for admin delete test" "public" "$BOB_TOKEN"
 assert_status "201" "Create Bob video"
 BOB_VIDEO_ID="$(json_get "$LAST_BODY_FILE" "data.video._id" 2>/dev/null || true)"
 require_value "$BOB_VIDEO_ID" "Bob video id"

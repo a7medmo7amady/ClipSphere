@@ -1,11 +1,48 @@
 {
   "info": {
-    "_postman_id": "8a6c6b8e-7f1a-4ef0-9d8b-8b2f4b25b8e1",
-    "name": "ClipSphere API (Server)",
+    "_postman_id": "7df0e38a-816a-4c04-84cc-cf57af89ad0d",
+    "name": "ClipSphere API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for ClipSphere server auth + user profile APIs.\n\nVariables:\n- baseUrl (default): http://localhost:5000\n- token: set automatically after verify-email/login\n- verificationCode: latest email verification code\n- targetUserId: ID of any user for follow/unfollow/followers/following/getUserById\n"
+    "description": "Comprehensive Postman collection for ClipSphere backend APIs.\n\nHow to use:\n1) Set collection variable baseUrl (default http://localhost:5000)\n2) Run Auth > Register, then set verificationCode from email\n3) Run Auth > Verify Email (or Login) to auto-store token\n4) Use protected endpoints with Bearer token\n\nUseful variables:\n- token\n- targetUserId\n- targetVideoId\n- targetNotificationId"
   },
   "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Get Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Auth",
       "item": [
@@ -21,7 +58,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"test_user\",\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\"\n}"
+              "raw": "{\n  \"username\": \"postman_user\",\n  \"name\": \"Postman User\",\n  \"email\": \"postman.user@example.com\",\n  \"password\": \"Password123!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
@@ -40,12 +77,12 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 201', function () {",
                   "  pm.response.to.have.status(201);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -63,7 +100,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"code\": \"{{verificationCode}}\"\n}"
+              "raw": "{\n  \"email\": \"postman.user@example.com\",\n  \"code\": \"{{verificationCode}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/verify-email",
@@ -82,17 +119,16 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
                   "const json = pm.response.json();",
                   "if (json && json.token) {",
                   "  pm.collectionVariables.set('token', json.token);",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -110,7 +146,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\"\n}"
+              "raw": "{\n  \"email\": \"postman.user@example.com\",\n  \"password\": \"Password123!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
@@ -129,20 +165,78 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "",
                   "const json = pm.response.json();",
                   "if (json && json.token) {",
                   "  pm.collectionVariables.set('token', json.token);",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"Password1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth Start",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "google"
+              ]
+            }
+          },
           "response": []
         }
       ]
@@ -182,12 +276,17 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200', function () {",
                   "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "});",
+                  "const json = pm.response.json();",
+                  "const userId = json?.data?.user?.id;",
+                  "if (userId) {",
+                  "  pm.collectionVariables.set('targetUserId', userId);",
+                  "}"
+                ]
               }
             }
           ],
@@ -215,7 +314,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\",\n  \"bio\": \"Updated bio text\"\n,\n  \"avatarKey\": \"Updated avatar key\"\n}"
+              "raw": "{\n  \"name\": \"Updated Postman Name\",\n  \"bio\": \"Updated from Postman collection\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/updateMe",
@@ -230,19 +329,6 @@
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -283,19 +369,6 @@
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -317,32 +390,40 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetUserId}}",
-                  "description": "ID of the user to retrieve"
+                  "value": "{{targetUserId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Follow",
-      "item": [
+        },
+        {
+          "name": "Get User Videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/:id/videos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":id",
+                "videos"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetUserId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Follow User",
           "request": {
@@ -359,7 +440,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/:id/unfollow",
+              "raw": "{{baseUrl}}/api/v1/users/:id/follow",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -368,30 +449,16 @@
                 "v1",
                 "users",
                 ":id",
-                "unfollow"
+                "follow"
               ],
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetUserId}}",
-                  "description": "ID of the user to follow"
+                  "value": "{{targetUserId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -410,7 +477,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/:id/follow",
+              "raw": "{{baseUrl}}/api/v1/users/:id/unfollow",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -419,30 +486,16 @@
                 "v1",
                 "users",
                 ":id",
-                "follow"
+                "unfollow"
               ],
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetUserId}}",
-                  "description": "ID of the user to unfollow"
+                  "value": "{{targetUserId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -465,25 +518,11 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetUserId}}",
-                  "description": "ID of the user whose followers to retrieve"
+                  "value": "{{targetUserId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -506,25 +545,11 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetUserId}}",
-                  "description": "ID of the user whose following list to retrieve"
+                  "value": "{{targetUserId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         }
       ]
@@ -538,7 +563,36 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/videos/",
+              "raw": "{{baseUrl}}/api/v1/videos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Following Feed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/feed/following",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -546,7 +600,8 @@
                 "api",
                 "v1",
                 "videos",
-                ""
+                "feed",
+                "following"
               ]
             }
           },
@@ -571,8 +626,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetVideoId}}",
-                  "description": "ID of the video to retrieve"
+                  "value": "{{targetVideoId}}"
                 }
               ]
             }
@@ -580,7 +634,7 @@
           "response": []
         },
         {
-          "name": "Create Video (Unified Upload)",
+          "name": "Create Video (Multipart)",
           "request": {
             "auth": {
               "type": "bearer",
@@ -601,21 +655,16 @@
                   "key": "video",
                   "type": "file",
                   "src": [],
-                  "description": "The actual video file (mp4, mov, etc)"
+                  "description": "Required. Video file"
                 },
                 {
                   "key": "title",
-                  "value": "My New Video",
+                  "value": "My Postman Video",
                   "type": "text"
                 },
                 {
                   "key": "description",
-                  "value": "Awesome content uploaded directly!",
-                  "type": "text"
-                },
-                {
-                  "key": "duration",
-                  "value": "120",
+                  "value": "Uploaded via Postman",
                   "type": "text"
                 },
                 {
@@ -626,15 +675,14 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/videos/",
+              "raw": "{{baseUrl}}/api/v1/videos",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "videos",
-                ""
+                "videos"
               ]
             }
           },
@@ -642,18 +690,17 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 201', function () {",
                   "  pm.response.to.have.status(201);",
                   "});",
-                  "",
                   "const json = pm.response.json();",
-                  "const videoId = json?.data?.video?._id;",
-                  "if (videoId) {",
-                  "  pm.collectionVariables.set('targetVideoId', videoId);",
+                  "const id = json?.data?.video?._id;",
+                  "if (id) {",
+                  "  pm.collectionVariables.set('targetVideoId', id);",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -681,7 +728,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"description\": \"Updated description\"\n}"
+              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"description\": \"Updated via Postman\",\n  \"tags\": [\"demo\", \"postman\"]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/videos/:id",
@@ -697,25 +744,11 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetVideoId}}",
-                  "description": "ID of the video to update"
+                  "value": "{{targetVideoId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -747,25 +780,11 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetVideoId}}",
-                  "description": "ID of the video to delete"
+                  "value": "{{targetVideoId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
@@ -790,7 +809,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great video! Highly recommended.\"\n}"
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great video from Postman test.\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/videos/:id/reviews",
@@ -807,25 +826,210 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{targetVideoId}}",
-                  "description": "ID of the video to review"
+                  "value": "{{targetVideoId}}"
                 }
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200, 404, or 409', function () {",
-                  "  pm.expect([200, 404, 409]).to.include(pm.response.code);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
+          "response": []
+        },
+        {
+          "name": "Get Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "reviews"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}"
+                }
+              ]
             }
-          ],
+          },
+          "response": []
+        },
+        {
+          "name": "Like Video",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "like"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unlike Video",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "like"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Like Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/like/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "like",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Record View",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/view",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "view"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Similar Videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/videos/:id/recommendations?limit=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "videos",
+                ":id",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetVideoId}}"
+                }
+              ]
+            }
+          },
           "response": []
         }
       ]
@@ -847,6 +1051,7 @@
               ]
             },
             "method": "GET",
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/recommendations/feed?limit=12&historyLimit=50",
               "host": [
@@ -870,58 +1075,13 @@
               ]
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 409', function () {",
-                  "  pm.expect([200, 409]).to.include(pm.response.code);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "response": []
         },
         {
-          "name": "Get Similar Videos",
+          "name": "Get Trending",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/videos/:id/recommendations?limit=12",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "videos",
-                ":id",
-                "recommendations"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "12"
-                }
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{targetVideoId}}",
-                  "description": "ID of the video to find similar videos for"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Trending Videos",
-          "request": {
-            "method": "GET",
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/recommendations/trending?limit=12",
               "host": [
@@ -941,19 +1101,384 @@
               ]
             }
           },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Watch History",
+      "item": [
+        {
+          "name": "Log Watch",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"videoId\": \"{{targetVideoId}}\",\n  \"watchDuration\": 60,\n  \"completed\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watch-history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "watch-history"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ]
+            }
+          },
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "const json = pm.response.json();",
+                  "const id = json?.data?.notifications?.[0]?._id;",
+                  "if (id) {",
+                  "  pm.collectionVariables.set('targetNotificationId', id);",
+                  "}"
+                ]
               }
             }
           ],
+          "response": []
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "unread-count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All As Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark One As Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetNotificationId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin (Requires admin role)",
+      "item": [
+        {
+          "name": "Admin Health",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Stats",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Moderation Queue",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "moderation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true,\n  \"accountStatus\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetUserId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Promote User To Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:id/promote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":id",
+                "promote"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{targetUserId}}"
+                }
+              ]
+            }
+          },
           "response": []
         }
       ]
@@ -978,14 +1503,17 @@
     {
       "key": "targetUserId",
       "value": "",
-      "type": "string",
-      "description": "ID of the target user for follow/unfollow/followers/following/getUserById endpoints"
+      "type": "string"
     },
     {
       "key": "targetVideoId",
       "value": "",
-      "type": "string",
-      "description": "ID of the target video for GET/PATCH/DELETE endpoints"
+      "type": "string"
+    },
+    {
+      "key": "targetNotificationId",
+      "value": "",
+      "type": "string"
     }
   ]
 }
