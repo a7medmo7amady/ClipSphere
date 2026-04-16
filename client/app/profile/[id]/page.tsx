@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 const API = "http://localhost:5000/api/v1";
 
@@ -244,13 +245,14 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 {videos.map((video: any) => (
                   <Link key={video._id} href={`/video/${video._id}`}>
                     <Card className="group overflow-hidden bg-zinc-900 border-zinc-800 hover:border-violet-500/50 transition-all">
-                      <div className="relative aspect-video bg-zinc-800 flex items-center justify-center">
-                        <Play className="w-10 h-10 text-zinc-600 group-hover:text-violet-500 transition-colors" />
-                        <Badge className="absolute top-2 right-2 bg-zinc-950/90 text-white border-0">
-                          {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}
+                      <div className="relative aspect-video bg-zinc-800 flex items-center justify-center overflow-hidden">
+                        {video.videoURL ? <VideoThumbnail videoUrl={video.videoURL} className="absolute inset-0 z-0 opacity-70 group-hover:opacity-100 transition-opacity" /> : null}
+                        <Play className="relative z-10 w-10 h-10 text-white drop-shadow-lg group-hover:text-violet-500 transition-colors" />
+                        <Badge className="absolute z-10 top-2 right-2 bg-zinc-950/90 text-white border-0">
+                          {video.duration ? `${Math.floor(video.duration / 60)}:${String(video.duration % 60).padStart(2, "0")}` : "0:00"}
                         </Badge>
-                        <div className="absolute bottom-2 left-2 right-2 flex items-center gap-3 text-white text-xs">
-                          <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
+                        <div className="absolute z-10 bottom-2 left-2 right-2 flex items-center gap-3 text-white text-xs drop-shadow-md">
+                          <span className="flex items-center gap-1 font-semibold"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
                         </div>
                       </div>
                       <div className="p-3">

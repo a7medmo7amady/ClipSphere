@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 const API = "http://localhost:5000/api/v1";
 
@@ -89,18 +90,19 @@ export default function Discover() {
                 <Card key={video._id} className="group bg-zinc-900 border-zinc-800 overflow-hidden hover:border-violet-500/50 transition-all">
                   <Link href={`/video/${video._id}`}>
                     <div className="relative aspect-video bg-zinc-800 flex items-center justify-center overflow-hidden">
-                      <Play className="w-12 h-12 text-zinc-600 group-hover:text-violet-500 transition-colors" />
-                      <div className="absolute inset-0 bg-linear-to-t from-zinc-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-14 h-14 rounded-full bg-violet-600/90 backdrop-blur-sm flex items-center justify-center">
+                      {video.videoURL ? <VideoThumbnail videoUrl={video.videoURL} className="absolute inset-0 z-0 opacity-80 group-hover:opacity-100 transition-opacity duration-500" /> : null}
+                      <Play className="absolute z-10 w-12 h-12 text-white/40 drop-shadow-lg group-hover:opacity-0 transition-opacity" />
+                      <div className="absolute inset-0 z-10 bg-gradient-to-t from-zinc-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="w-14 h-14 rounded-full bg-violet-600/90 backdrop-blur-sm flex items-center justify-center shadow-xl shadow-violet-900/50">
                           <Play className="w-7 h-7 text-white ml-1" fill="currentColor" />
                         </div>
                       </div>
-                      <Badge className="absolute top-2 right-2 bg-zinc-950/90 text-white border-0 text-xs">
+                      <Badge className="absolute z-20 top-2 right-2 bg-zinc-950/90 text-white border-0 text-xs">
                         {formatDuration(video.duration ?? 0)}
                       </Badge>
-                      <div className="absolute bottom-2 left-2 flex items-center gap-2 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
+                      <div className="absolute z-20 bottom-2 left-2 flex items-center gap-2 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="flex items-center gap-1 font-semibold drop-shadow-md"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
                       </div>
                     </div>
                   </Link>
