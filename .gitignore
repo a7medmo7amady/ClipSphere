@@ -18,4 +18,5 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
-Docs/.obsidian
+# Obsidian stuff
+.obsidian/

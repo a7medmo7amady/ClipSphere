@@ -1,0 +1,341 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { Upload as UploadIcon, X, Video, AlertCircle, CheckCircle2, Film } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+export default function Upload() {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadComplete, setUploadComplete] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+      setError(null);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!selected.type.startsWith("video/")) {
+      setError("Please select a video file (MP4, MOV, AVI, WebM).");
+      e.target.value = "";
+      return;
+    }
+    setFile(selected);
+    setError(null);
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to upload.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("video", file);
+    formData.append("title", title.trim());
+    if (description.trim()) formData.append("description", description.trim());
+    formData.append("status", visibility);
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status === 201) {
+            resolve();
+          } else {
+            let message = "Upload failed.";
+            try {
+              const body = JSON.parse(xhr.responseText);
+              message = body.message || message;
+            } catch {
+              
+            }
+            reject(new Error(message));
+          }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Network error during upload.")));
+        xhr.addEventListener("abort", () => reject(new Error("Upload was cancelled.")));
+
+        xhr.open("POST", "http://localhost:5000/api/v1/videos");
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.send(formData);
+      });
+
+      setUploadComplete(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setFile(null);
+    setUploadComplete(false);
+    setUploadProgress(0);
+    setError(null);
+    setTitle("");
+    setDescription("");
+    setVisibility("public");
+  };
+
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Upload Video</h1>
+          <p className="text-zinc-400">Share your story with the world (max 5 minutes)</p>
+        </div>
+
+     
+        <div className="space-y-6">
+        
+          <Card className="p-8 bg-zinc-900 border-zinc-800">
+            {!file ? (
+              <div
+                className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all ${
+                  dragActive
+                    ? "border-violet-500 bg-violet-500/10"
+                    : "border-zinc-700 hover:border-zinc-600"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
+                    <Video className="w-10 h-10 text-violet-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Drop your video here
+                  </h3>
+                  <p className="text-zinc-400 mb-6">or click to browse</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <Button
+                    size="lg"
+                    className="bg-violet-600 hover:bg-violet-700 cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <UploadIcon className="w-5 h-5 mr-2" />
+                    Select Video File
+                  </Button>
+                  <p className="text-sm text-zinc-500 mt-4">
+                    Supports: MP4, MOV, AVI (Max duration: 5 minutes)
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* File Preview */}
+                <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-violet-600/20 flex items-center justify-center">
+                      <Film className="w-6 h-6 text-violet-500" />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{file.name}</p>
+                      <p className="text-sm text-zinc-400">
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleReset}
+                    className="text-zinc-400 hover:text-white"
+                    disabled={uploading}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+
+                {/* Upload Progress */}
+                {uploading && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-zinc-400">Uploading...</span>
+                      <span className="text-white font-medium">{uploadProgress}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
+                )}
+
+                {/* Upload Complete */}
+                {uploadComplete && (
+                  <Alert className="bg-emerald-500/10 border-emerald-500/50">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <AlertDescription className="text-emerald-500">
+                      Video uploaded successfully to MinIO storage!
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Error */}
+                {error && (
+                  <Alert className="bg-red-500/10 border-red-500/50">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                    <AlertDescription className="text-red-500">{error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* Video Details */}
+          {file && (
+            <Card className="p-6 bg-zinc-900 border-zinc-800">
+              <h3 className="text-lg font-semibold text-white mb-4">Video Details</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title" className="text-zinc-300">
+                    Title *
+                  </Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Give your video a catchy title"
+                    maxLength={150}
+                    className="mt-1.5 bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description" className="text-zinc-300">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Tell viewers about your video..."
+                    rows={4}
+                    maxLength={5000}
+                    className="mt-1.5 bg-zinc-800 border-zinc-700 text-white resize-none"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="visibility" className="text-zinc-300">
+                    Visibility
+                  </Label>
+                  <select
+                    id="visibility"
+                    title="Video Visibility"
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value as "public" | "private")}
+                    className="mt-1.5 w-full h-10 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-white"
+                  >
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+              </div>
+            </Card>
+          )}
+          <Alert className="bg-blue-500/10 border-blue-500/50">
+            <AlertCircle className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="text-blue-500">
+              <strong>Warning</strong> Videos can not exceed 300 seconds (5 minutes). Invalid files will not be uploaded.
+            </AlertDescription>
+          </Alert>
+
+          {file && (
+            <div className="flex gap-4">
+              <Button
+                size="lg"
+                className="flex-1 bg-violet-600 hover:bg-violet-700"
+                onClick={handleUpload}
+                disabled={uploading || uploadComplete}
+              >
+                {uploading ? "Uploading..." : uploadComplete ? "Uploaded" : "Publish Video"}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                onClick={handleReset}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <Card className="mt-8 p-6 bg-zinc-900 border-zinc-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Upload Guidelines</h3>
+          <ul className="space-y-2 text-zinc-400">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+              <span>Videos must be less than 5 minutes (300 seconds)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+              <span>Supported formats: MP4, MOV, AVI</span>
+            </li>
+
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}

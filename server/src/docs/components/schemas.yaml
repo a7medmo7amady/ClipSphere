@@ -61,13 +61,48 @@ schemas:
       description:
         type: string
         nullable: true
+      tags:
+        type: array
+        items:
+          type: string
+      embedding:
+        type: array
+        items:
+          type: number
       videoURL:
         type: string
       duration:
         type: number
+      viewsCount:
+        type: number
+      reviewsCount:
+        type: number
+      avgRating:
+        type: number
+      trendingScore:
+        type: number
       status:
         type: string
-        enum: [public, private]
+        enum: [public, private, flagged]
+
+  WatchHistory:
+    type: object
+    additionalProperties: true
+    properties:
+      _id:
+        type: string
+      user:
+        type: string
+      video:
+        type: string
+      watchedAt:
+        type: string
+        format: date-time
+      watchDuration:
+        type: number
+        minimum: 0
+      completed:
+        type: boolean
 
   Review:
     type: object
@@ -157,6 +192,14 @@ schemas:
       description:
         type: string
         maxLength: 5000
+      tags:
+        type: array
+        items:
+          type: string
+      embedding:
+        type: array
+        items:
+          type: number
       videoURL:
         type: string
         minLength: 1
@@ -167,7 +210,7 @@ schemas:
         maximum: 300
       status:
         type: string
-        enum: [public, private]
+        enum: [public, private, flagged]
 
   UpdateVideoRequest:
     type: object
@@ -181,6 +224,30 @@ schemas:
       description:
         type: string
         maxLength: 5000
+      tags:
+        type: array
+        items:
+          type: string
+      embedding:
+        type: array
+        items:
+          type: number
+
+  LogWatchRequest:
+    type: object
+    additionalProperties: false
+    required: [videoId, watchDuration, completed]
+    properties:
+      videoId:
+        type: string
+        minLength: 1
+        maxLength: 24
+        pattern: '^[a-fA-F0-9]{24}$'
+      watchDuration:
+        type: number
+        minimum: 0
+      completed:
+        type: boolean
 
   CreateReviewRequest:
     type: object

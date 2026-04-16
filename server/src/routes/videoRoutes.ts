@@ -1,13 +1,22 @@
 import express from "express";
 import protect from "../middleware/protect";
+import upload from "../middleware/upload";
 import { validateBody } from "../middleware/validate";
 import {
   createVideoController,
   getAllPublicVideosController,
+  getVideoController,
   updateVideoController,
   deleteVideoController,
   createReviewController,
+  getReviewsController,
+  likeVideoController,
+  unlikeVideoController,
+  checkLikeStatusController,
+  viewVideoController,
+  getFollowingVideosController,
 } from "../controllers/videoController";
+import { similarVideosController } from "../controllers/recommendationController";
 import {
   createVideoSchema,
   updateVideoSchema,
@@ -21,7 +30,16 @@ import {
 const router = express.Router();
 
 router.get("/", getAllPublicVideosController);
-router.post("/", protect, validateBody(createVideoSchema), createVideoController);
+router.get("/feed/following", protect, getFollowingVideosController);
+router.get("/:id/recommendations", similarVideosController);
+router.get("/:id", getVideoController);
+router.post(
+  "/",
+  protect,
+  upload.single("video"),
+  validateBody(createVideoSchema),
+  createVideoController
+);
 router.patch(
   "/:id",
   protect,
@@ -36,5 +54,12 @@ router.post(
   validateBody(createReviewSchema),
   createReviewController
 );
+router.get("/:id/reviews", getReviewsController);
+
+router.post("/:id/like", protect, likeVideoController);
+router.delete("/:id/like", protect, unlikeVideoController);
+router.get("/:id/like/status", protect, checkLikeStatusController);
+
+router.post("/:id/view", viewVideoController);
 
 export default router;

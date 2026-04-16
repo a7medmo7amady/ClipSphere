@@ -73,7 +73,7 @@
     - [x]  Generate JWT (24h expiry)
 ---
 
-## User Controllert
+## User Controllert 
 
 - [x]  getMe()
 - [x]  updateMe()

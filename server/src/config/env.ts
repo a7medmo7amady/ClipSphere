@@ -8,6 +8,23 @@ dotenv.config({
 
 const requiredEnv = ["PORT", "MONGODB_URI", "JWT_SECRET"] as const;
 
+type EmbeddingsMode = "strict" | "best-effort";
+
+function parseEmbeddingsMode(value: string | undefined, env: string): EmbeddingsMode {
+  if (value === "strict" || value === "best-effort") return value;
+  return env === "production" ? "best-effort" : "strict";
+}
+
+const parsedVerificationCodeExpiry = Number.parseInt(
+  process.env.VERIFICATION_CODE_EXPIRES_IN ?? "10",
+  10
+);
+
+const verificationCodeExpiresInMinutes =
+  Number.isNaN(parsedVerificationCodeExpiry) || parsedVerificationCodeExpiry <= 0
+    ? 10
+    : parsedVerificationCodeExpiry;
+
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
     const message =
@@ -24,8 +41,14 @@ const config = {
   mongoUri: process.env.MONGODB_URI as string,
   jwtSecret: process.env.JWT_SECRET as string,
   jwtExpiresIn: (process.env.JWT_EXPIRES_IN || "24h") as SignOptions["expiresIn"],
-  verificationCodeExpiresInMinutes: Number(process.env.VERIFICATION_CODE_EXPIRES_IN),
+  verificationCodeExpiresInMinutes,
+  embeddingsMode: parseEmbeddingsMode(
+    process.env.EMBEDDINGS_MODE,
+    process.env.NODE_ENV || "development"
+  ),
+  geminiApiKey: process.env.GEMINI_API_KEY || "",
+  geminiEmbeddingModel: process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001",
+  mongoVideoVectorIndexName: process.env.MONGO_VIDEO_VECTOR_INDEX_NAME || "videos_embedding_index",
 };
 
 export default config;
-

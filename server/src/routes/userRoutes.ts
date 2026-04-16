@@ -8,6 +8,7 @@ import {
   getFollowersController,
   getFollowingController,
   getUserByIdController,
+  getUserVideosController,
 } from "../controllers/userController";
 import protect from "../middleware/protect";
 import { validateBody } from "../middleware/validate";
@@ -24,6 +25,7 @@ router.patch("/me/preferences", protect, validateBody(updatePreferencesSchema), 
 
 
 router.get("/:id", getUserByIdController);
+router.get("/:id/videos", getUserVideosController);
 
 // Follow / unfollow (protected; self-follow rejected in service + Follower pre-save hook)
 router.post("/:id/follow", protect, followController);
