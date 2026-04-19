@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -50,6 +51,22 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   const [shareText, setShareText] = useState("Share");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [tipAmount, setTipAmount] = useState(10);
+  const [customAmount, setCustomAmount] = useState("");
+  const [tipLoading, setTipLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tipStatus = params.get("tip");
+    if (tipStatus === "success") {
+      alert("Thank you for your tip!");
+      window.history.replaceState({}, "", `/video/${id}`);
+    } else if (tipStatus === "cancelled") {
+      window.history.replaceState({}, "", `/video/${id}`);
+    }
+  }, [id]);
 
   function authHeaders(): Record<string, string> {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -120,6 +137,36 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
       setTimeout(() => setShareText("Share"), 2000);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleTip = async () => {
+    if (!user) return alert("Please log in to send a tip");
+    const amount = customAmount ? parseFloat(customAmount) : tipAmount;
+    if (!amount || amount < 1) return alert("Please enter a valid amount");
+
+    setTipLoading(true);
+    try {
+      const res = await fetch(`${API}/tips/create-session`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          videoId: id,
+          amount,
+          creatorId: ownerId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to create tip");
+
+      if (data.data.url) {
+        window.location.href = data.data.url;
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setTipLoading(false);
     }
   };
 
@@ -312,7 +359,7 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
                   {shareText === "Copied!" ? <Check className="w-5 h-5 mr-2 text-green-400" /> : <Share2 className="w-5 h-5 mr-2" />}
                   {shareText}
                 </Button>
-                <Button variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white">
+                <Button variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white" onClick={() => setShowTipModal(true)}>
                   <DollarSign className="w-5 h-5 mr-2" />
                   Send Tip
                 </Button>
@@ -457,6 +504,51 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
+
+      <Dialog open={showTipModal} onOpenChange={setShowTipModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Send a Tip</DialogTitle>
+          </DialogHeader>
+          <p className="text-zinc-400 text-sm mb-4">Support <span className="text-white font-medium">@{video?.owner?.username}</span> for their video!</p>
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[10, 25, 50].map((amount) => (
+              <button
+                key={amount}
+                onClick={() => { setTipAmount(amount); setCustomAmount(""); }}
+                className={`py-3 px-4 rounded-lg font-medium transition-all ${
+                  !customAmount && tipAmount === amount
+                    ? "bg-violet-600 text-white"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                }`}
+              >
+                ${amount}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-4">
+            <Input
+              type="number"
+              placeholder="Custom amount"
+              value={customAmount}
+              onChange={(e) => { setCustomAmount(e.target.value); }}
+              className="bg-zinc-800 border-zinc-700 text-white"
+              min="1"
+            />
+          </div>
+
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={() => setShowTipModal(false)} disabled={tipLoading}>
+              Cancel
+            </Button>
+            <Button className="bg-violet-600 hover:bg-violet-700" onClick={handleTip} disabled={tipLoading}>
+              {tipLoading ? "Processing..." : `Send $${customAmount || tipAmount}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm">

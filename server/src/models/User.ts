@@ -51,6 +51,8 @@ export interface IUser {
   recommendationEmbeddingStatus?: "pending" | "ready" | "failed";
   recommendationEmbeddingLastError?: string;
 
+  stripeCustomerId?: string;
+
   comparePassword(candidate: string): Promise<boolean>;
   toPublicJSON(): PublicUser;
 }
@@ -151,6 +153,10 @@ const userSchema = new mongoose.Schema<IUser>(
     recommendationEmbeddingLastError: {
       type: String,
       maxlength: 2000,
+      select: false,
+    },
+    stripeCustomerId: {
+      type: String,
       select: false,
     },
   },

@@ -8,6 +8,7 @@ import adminRoutes from "./adminRoutes";
 import docsRoutes from "./docsRoutes";
 import recommendationRoutes from "./recommendationRoutes";
 import notificationRoutes from "./notificationRoutes";
+import tipRoutes from "./tipRoutes";
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.use("/api/v1/watch-history", watchHistoryRoutes);
 router.use("/api/v1/recommendations", recommendationRoutes);
 router.use("/api/v1/admin", adminRoutes);
 router.use("/api/v1/notifications", notificationRoutes);
+router.use("/api/v1/tips", tipRoutes);
 
 export default router;
 
