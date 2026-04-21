@@ -84,6 +84,32 @@ export const createTipSession = async (req: Request, res: Response, _next: NextF
 };
 
 export const handleStripeWebhook = async (req: Request, res: Response, _next: NextFunction) => {
+  const reqAny = req as any;
+  const body = reqAny.rawBody || JSON.stringify(req.body);
+  
+  // For local development without signature verification
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const event = body ? JSON.parse(body) : req.body;
+      console.log("Webhook received (no sig check):", event.type);
+      
+      if (event.type === "checkout.session.completed") {
+        const session = event.data?.object;
+        if (session?.metadata?.recipientId) {
+          await Tip.findOneAndUpdate(
+            { stripeSessionId: session.id },
+            { status: "completed" }
+          );
+        }
+      }
+      return res.json({ received: true });
+    } catch (err) {
+      console.error("Webhook parse error:", err);
+      return res.status(400).json({ message: "Parse error" });
+    }
+  }
+
+  // Production: full verification
   if (!stripe) {
     return res.status(500).json({ message: "Stripe not configured" });
   }
@@ -96,10 +122,10 @@ export const handleStripeWebhook = async (req: Request, res: Response, _next: Ne
   }
 
   let event: any;
-
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
   } catch (err: any) {
+    console.error("Webhook signature error:", err.message);
     return res.status(400).json({ message: `Webhook Error: ${err.message}` });
   }
 
