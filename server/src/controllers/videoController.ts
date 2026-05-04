@@ -19,6 +19,7 @@ import { s3 } from "../config/s3";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
 import { getVideoDuration } from "../utils/videoProbe";
+import { getIO } from "../config/socket";
 
 export const createVideoController = catchAsync(async (req, res, next) => {
   if (!req.user) return next(new AppError("Authentication required", 401));
@@ -168,7 +169,23 @@ export const likeVideoController = catchAsync(async (req, res, next) => {
   const videoId = req.params.id?.toString();
   if (!videoId) return next(new AppError("Video ID is required", 400));
   
-  await likeVideo(videoId, req.user!.id);
+  const video = await getVideo(videoId);
+  await likeVideo(videoId, req.user!._id.toString());
+  
+  const ownerId = video.owner._id.toString();
+  const likerId = req.user!._id.toString();
+
+  // Real-time notification if liker is not the owner
+  if (ownerId !== likerId) {
+    const io = getIO();
+    const notificationData = {
+      likerName: req.user!.username || "Someone",
+      videoTitle: video.title,
+    };
+
+    io.to(ownerId).emit("toast-notification", notificationData);
+    io.to(ownerId).emit("notification", notificationData);
+  }
   
   res.status(200).json({ status: "success", message: "Video liked successfully" });
 });

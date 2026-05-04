@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, Eye, TrendingUp, Users, Clock, Loader2 } from "lucide-react";
+import { Play, Eye, TrendingUp, Users, Clock, Loader2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { useAuth } from "@/contexts/AuthContext";
+import {VideoCardSkeleton} from "@/components/VideoCardSkeleton"
 
 const API = "http://localhost:5000/api/v1";
 
@@ -102,8 +103,10 @@ export default function Discover() {
             </Link>
           </div>
         ) : loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <VideoCardSkeleton key={i} />
+            ))}
           </div>
         ) : sorted.length === 0 ? (
           <div className="text-center py-20 text-zinc-400">
@@ -117,52 +120,65 @@ export default function Discover() {
               const ownerAvatar = owner?.avatarKey ? `http://localhost:9000/clipsphere/${owner.avatarKey}` : "";
 
               return (
-                <Card key={video._id} className="group bg-zinc-900 border-zinc-800 overflow-hidden hover:border-violet-500/50 transition-all">
+                <Card key={video._id} className="group bg-zinc-900 border-zinc-800/50 overflow-hidden hover:border-violet-500/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(124,58,237,0.1)]">
                   <Link href={`/video/${video._id}`}>
                     <div className="relative aspect-video bg-zinc-800 flex items-center justify-center overflow-hidden">
-                      {video.videoURL ? <VideoThumbnail videoUrl={video.videoURL} className="absolute inset-0 z-0 opacity-80 group-hover:opacity-100 transition-opacity duration-500" /> : null}
-                      <Play className="absolute z-10 w-12 h-12 text-white/40 drop-shadow-lg group-hover:opacity-0 transition-opacity" />
-                      <div className="absolute inset-0 z-10 bg-gradient-to-t from-zinc-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="w-14 h-14 rounded-full bg-violet-600/90 backdrop-blur-sm flex items-center justify-center shadow-xl shadow-violet-900/50">
-                          <Play className="w-7 h-7 text-white ml-1" fill="currentColor" />
+                      {video.videoURL ? <VideoThumbnail videoUrl={video.videoURL} className="absolute inset-0 z-0 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" /> : null}
+                      <Play className="absolute z-10 w-12 h-12 text-white/20 drop-shadow-2xl group-hover:opacity-0 transition-opacity" />
+                      
+                      {/* Glassmorphism Overlays */}
+                      <div className="absolute inset-0 z-10 bg-linear-to-t from-zinc-950/90 via-zinc-950/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                      
+                      <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                        <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl ring-1 ring-white/30">
+                          <Play className="w-8 h-8 text-white ml-1 filter drop-shadow-lg" fill="currentColor" />
                         </div>
                       </div>
-                      <Badge className="absolute z-20 top-2 right-2 bg-zinc-950/90 text-white border-0 text-xs">
-                        {formatDuration(video.duration ?? 0)}
-                      </Badge>
-                      <div className="absolute z-20 bottom-2 left-2 flex items-center gap-2 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="flex items-center gap-1 font-semibold drop-shadow-md"><Eye className="w-3 h-3" />{formatCount(video.viewsCount ?? 0)}</span>
+
+                      <div className="absolute z-30 top-3 right-3">
+                        <Badge className="bg-zinc-950/40 backdrop-blur-md text-white border border-white/10 text-[10px] font-bold px-2 py-0.5">
+                          {formatDuration(video.duration ?? 0)}
+                        </Badge>
+                      </div>
+
+                      <div className="absolute z-30 bottom-3 left-3 right-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold">
+                            <Eye className="w-3.5 h-3.5 text-violet-400" />
+                            {formatCount(video.viewsCount ?? 0)}
+                          </div>
+                          {video.avgRating > 0 && (
+                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold">
+                              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500/20" />
+                              {video.avgRating.toFixed(1)}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Link>
 
-                  <div className="p-4">
+                  <div className="p-4 bg-linear-to-b from-zinc-900 to-zinc-950">
                     <Link href={`/video/${video._id}`}>
-                      <h3 className="font-semibold text-white mb-3 line-clamp-2 hover:text-violet-400 transition-colors">
+                      <h3 className="font-bold text-gray-200 mb-4 line-clamp-2 hover:text-violet-400 transition-colors leading-snug min-h-[2.5rem]">
                         {video.title}
                       </h3>
                     </Link>
 
                     <div className="flex items-center justify-between">
-                      <Link href={`/profile/${owner?._id ?? owner?.id}`} className="flex items-center gap-2 flex-1 min-w-0">
-                        <Avatar className="w-7 h-7">
-                          <AvatarImage src={ownerAvatar} />
-                          <AvatarFallback className="text-xs bg-violet-800 text-white">
-                            {ownerName[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-zinc-400 hover:text-white transition-colors truncate">
+                      <Link href={`/profile/${owner?._id ?? owner?.id}`} className="flex items-center gap-2.5 flex-1 min-w-0 group/author">
+                        <div className="relative">
+                          <Avatar className="w-8 h-8 ring-1 ring-white/10 group-hover/author:ring-violet-500/50 transition-all">
+                            <AvatarImage src={ownerAvatar} />
+                            <AvatarFallback className="text-xs bg-violet-600 text-white font-bold">
+                              {ownerName[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <span className="text-sm font-medium text-zinc-400 group-hover/author:text-white transition-colors truncate">
                           {ownerName}
                         </span>
                       </Link>
-
-                      {video.avgRating > 0 && (
-                        <div className="flex items-center gap-1 text-sm shrink-0">
-                          <span className="text-yellow-500">★</span>
-                          <span className="text-white font-medium">{video.avgRating.toFixed(1)}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Card>

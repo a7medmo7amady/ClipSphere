@@ -9,12 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { useSocket } from "@/contexts/SocketContext";
+import { NotificationToast } from "./NotificationToast";
 
 const API = "http://localhost:5000/api/v1";
 
 function useUnreadCount(userId: string | undefined) {
   const [count, setCount] = useState(0);
+  const { socket } = useSocket();
 
   useEffect(() => {
     if (!userId) return;
@@ -27,19 +29,18 @@ function useUnreadCount(userId: string | undefined) {
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => data && setCount(data.data.count ?? 0))
-      .catch(() => {});
+      .catch(() => { });
 
-    // Real-time updates via Socket.IO
-    const socket = io("http://localhost:5000", { auth: { token } });
+    if (!socket) return;
 
     socket.on("notification", () => {
       setCount((prev) => prev + 1);
     });
 
     return () => {
-      socket.disconnect();
+      socket.off("notification");
     };
-  }, [userId]);
+  }, [userId, socket]);
 
   return [count, () => setCount(0)] as const;
 }
@@ -60,6 +61,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-zinc-950">
+      <NotificationToast />
       <header className="fixed top-0 left-0 right-0 z-50 bg-zinc-900/80 backdrop-blur-xl border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">

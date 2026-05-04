@@ -28,10 +28,10 @@ export function initSocketIO(httpServer: HttpServer): Server {
 
   _io.on("connection", (socket: Socket) => {
     const userId = socket.data.userId as string;
-    socket.join(`user:${userId}`);
+    socket.join(userId);
 
     socket.on("disconnect", () => {
-      socket.leave(`user:${userId}`);
+      socket.leave(userId);
     });
   });
 

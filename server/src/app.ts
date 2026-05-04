@@ -14,10 +14,15 @@ export interface CustomRequest extends Request {
 export default function createApp() {
   const app = express();
 
-  app.use(cors());
-  app.use(express.json({ verify: (req: any, _res, buf) => {
-    req.rawBody = buf.toString();
-  } }));
+  app.use(cors({
+    origin: ['http://localhost:3000'], // Common local dev ports
+    credentials: true,
+  }));
+  app.use(express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf.toString();
+    }
+  }));
   app.use(passport.initialize());
 
   app.use(requestLogger);

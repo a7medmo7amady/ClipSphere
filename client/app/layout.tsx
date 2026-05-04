@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 
 export default function RootLayout({
   children,
@@ -31,9 +32,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
+          <SocketProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </SocketProvider>
         </AuthProvider>
       </body>
     </html>

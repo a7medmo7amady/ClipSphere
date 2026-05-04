@@ -80,27 +80,37 @@ export default function Home() {
         </section>
 
         {/* Featured Categories */}
-        <section className="py-12 px-4 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-300">Explore Categories</h2>
+        <section className="py-16 px-4 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-2">Explore Categories</h2>
+              <p className="text-zinc-400 text-sm">Discover content tailored to your interests</p>
+            </div>
             <Link href="/discover">
-              <Button variant="ghost" className="text-[#663399] hover:text-[#7d3fb8]">
-                View All
+              <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:text-violet-400 hover:border-violet-500/50 transition-all">
+                View All Categories
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredCategories.map((category, idx) => (
-              <Link key={idx} href="/discover" className="group relative h-64 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-linear-to-t from-zinc-950/90 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Link key={idx} href="/discover" className="group relative h-72 rounded-3xl overflow-hidden border border-white/5 hover:border-violet-500/30 transition-all duration-500 shadow-2xl">
                 <img
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                  <h3 className="text-xl font-bold text-white mb-1">{category.name}</h3>
-                  <p className="text-sm text-zinc-300">{category.count}</p>
+                <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/20 to-transparent z-10" />
+                
+                {/* Glassmorphism Badge */}
+                <div className="absolute bottom-4 left-4 right-4 p-5 z-20 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                  <h3 className="text-xl font-bold text-white mb-1 group-hover:text-violet-400 transition-colors">{category.name}</h3>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-zinc-400 font-medium">{category.count}</p>
+                    <div className="w-8 h-8 rounded-full bg-violet-600/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Play className="w-3 h-3 text-violet-400 fill-violet-400" />
+                    </div>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -108,11 +118,11 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 px-4 max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-300 mb-4">Why ClipSphere?</h2>
-            <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-              Professional-grade features for creators of all sizes
+        <section className="py-20 px-4 max-w-7xl mx-auto border-t border-zinc-900">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Elevate Your Content</h2>
+            <p className="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+              Powerful tools designed for modern creators. Scale your audience and monetize your passion with ease.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -121,22 +131,30 @@ export default function Home() {
                 title: "Real-Time Engagement",
                 description: "Instant notifications, live interactions, and Socket.io powered real-time updates.",
                 icon: "🚀",
+                gradient: "from-violet-600/10 to-transparent"
               },
               {
                 title: "Monetization Built-In",
                 description: "Accept tips from fans with Stripe integration. Turn your passion into profit.",
                 icon: "💰",
+                gradient: "from-fuchsia-600/10 to-transparent"
               },
               {
                 title: "Advanced Analytics",
                 description: "Track views, engagement, and revenue with detailed creator dashboards.",
                 icon: "📊",
+                gradient: "from-cyan-600/10 to-transparent"
               },
             ].map((feature, idx) => (
-              <div key={idx} className="p-8 rounded-2xl bg-linear-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 text-center hover:border-violet-500/50 transition-colors">
-                <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold text-gray-300 mb-3">{feature.title}</h3>
-                <p className="text-zinc-400 leading-relaxed">{feature.description}</p>
+              <div key={idx} className={`group p-10 rounded-3xl bg-linear-to-br ${feature.gradient} border border-white/5 hover:border-violet-500/30 transition-all duration-500 text-center relative overflow-hidden`}>
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <div className="text-9xl">{feature.icon}</div>
+                </div>
+                <div className="relative z-10">
+                  <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-500 inline-block">{feature.icon}</div>
+                  <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
+                  <p className="text-zinc-400 leading-relaxed text-sm">{feature.description}</p>
+                </div>
               </div>
             ))}
           </div>

@@ -19,16 +19,21 @@ export async function createNotification({
   const notif = await Notification.create({ recipient: recipientId, actor: actorId, type, message, link });
 
   try {
-    getIO().to(`user:${recipientId}`).emit("notification", {
+    const User = require("../models/User").default;
+    const actor = await User.findById(actorId).select("name username");
+    const actorName = actor?.name || actor?.username || "Someone";
+
+    getIO().to(recipientId).emit("notification", {
       _id: notif._id,
       type: notif.type,
       message: notif.message,
+      likerName: actorName, // Use for toast consistency
       link: notif.link,
       read: false,
       createdAt: notif.createdAt,
     });
-  } catch {
-    // Socket.IO not available (e.g. during tests)
+  } catch (err) {
+    console.error("Socket emission failed", err);
   }
 }
 

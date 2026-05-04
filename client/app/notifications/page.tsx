@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, UserPlus, Star, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, UserPlus, Star, CheckCheck, Loader2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +29,7 @@ function timeAgo(date: string) {
 function NotifIcon({ type }: { type: string }) {
   if (type === "follow") return <UserPlus className="w-4 h-4 text-violet-400" />;
   if (type === "review") return <Star className="w-4 h-4 text-amber-400" />;
+  if (type === "like") return <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />;
   return <Bell className="w-4 h-4 text-zinc-400" />;
 }
 
@@ -137,11 +138,20 @@ export default function NotificationsPage() {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <NotifIcon type={notif.type} />
-                          <p className="text-white text-sm">{notif.message}</p>
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white hover:text-violet-400 transition-colors">
+                              {actor?.name || actor?.username || "Someone"}
+                            </span>
+                            <NotifIcon type={notif.type} />
+                          </div>
+                          <p className="text-zinc-400 text-sm line-clamp-2">
+                            {notif.message}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider font-medium">
+                            {timeAgo(notif.createdAt)}
+                          </p>
                         </div>
-                        <p className="text-xs text-zinc-500">{timeAgo(notif.createdAt)}</p>
                       </div>
 
                       {/* Unread dot */}

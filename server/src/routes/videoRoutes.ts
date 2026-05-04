@@ -26,6 +26,7 @@ import {
   requireVideoOwnership,
   requireVideoOwnershipOrAdmin,
 } from "../middleware/authorize";
+import { uploadLimiter } from "../middleware/rateLimiter";
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ router.get("/:id", getVideoController);
 router.post(
   "/",
   protect,
+  uploadLimiter,
   upload.single("video"),
   validateBody(createVideoSchema),
   createVideoController

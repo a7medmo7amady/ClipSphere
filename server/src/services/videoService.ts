@@ -287,11 +287,14 @@ export async function likeVideo(videoId: string, userId: string) {
     
     try {
       if (video.owner.toString() !== userId) {
+        const actor = await User.findById(userId).select("username name");
+        const actorName = actor?.name || actor?.username || "Someone";
+        
         await createNotification({
           recipientId: video.owner.toString(),
           actorId: userId,
           type: "like",
-          message: "liked your video",
+          message: `${actorName} liked your video "${video.title}".`,
           link: `/video/${video._id}`
         });
       }
